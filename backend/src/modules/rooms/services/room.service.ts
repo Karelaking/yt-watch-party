@@ -88,7 +88,10 @@ export class RoomService implements IRoomService {
     userId?: string
   ): Promise<{ room: RoomEntity; settings: RoomSettingsEntity | null }> {
     const cleanCode = code.trim().toUpperCase();
-    const room = await this.roomRepository.findByCode(cleanCode);
+    let room = await this.roomRepository.findByCode(cleanCode);
+    if (!room && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(code.trim())) {
+      room = await this.roomRepository.findById(code.trim().toLowerCase());
+    }
     if (!room) throw new NotFoundError('Room not found with provided code');
     if (room.status !== 'ACTIVE') throw new NotFoundError(`Room is no longer active (status: ${room.status.toLowerCase()})`);
 
@@ -137,7 +140,10 @@ export class RoomService implements IRoomService {
     id: string,
     userId?: string
   ): Promise<{ room: RoomEntity; settings: RoomSettingsEntity | null }> {
-    const room = await this.roomRepository.findById(id);
+    let room = await this.roomRepository.findById(id.trim().toLowerCase());
+    if (!room) {
+      room = await this.roomRepository.findByCode(id.trim().toUpperCase());
+    }
     if (!room) throw new NotFoundError('Room not found');
     if (room.status !== 'ACTIVE') throw new NotFoundError(`Room is no longer active (status: ${room.status.toLowerCase()})`);
 
