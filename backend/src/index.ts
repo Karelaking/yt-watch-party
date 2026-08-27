@@ -71,9 +71,9 @@ async function bootstrap(): Promise<void> {
     container.resolve<IRoomPubSubService>(TYPES.RoomPubSubService)
   );
 
-  httpServer.listen(env.PORT, () => {
-    console.log(`🚀 YouTube Watch Party Server running on http://localhost:${env.PORT}`);
-    console.log(`📡 WebSockets listening on ws://localhost:${env.PORT}`);
+  httpServer.listen(env.PORT, '0.0.0.0', () => {
+    console.log(`🚀 YouTube Watch Party Server running on http://0.0.0.0:${env.PORT}`);
+    console.log(`📡 WebSockets listening on ws://0.0.0.0:${env.PORT}`);
     console.log(`🌍 Environment: ${env.NODE_ENV}`);
   });
 

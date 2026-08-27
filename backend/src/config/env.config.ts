@@ -23,7 +23,7 @@ for (const envPath of candidatePaths) {
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().default('3001').transform((val) => parseInt(val, 10)),
+  PORT: z.union([z.string(), z.number()]).default('3001').transform((val) => (typeof val === 'number' ? val : parseInt(String(val), 10))),
   HOST: z.string().default('0.0.0.0'),
   CORS_ORIGIN: z.string().default('https://watchparty-yt.vercel.app,http://localhost:3000,http://localhost:3001'),
 
