@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "build": "npm --prefix backend run build",
-    "start": "npm --prefix backend start",
+    "start": "node backend/dist/index.js",
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   }
 }
