@@ -1,0 +1,490 @@
+import type { Server, Socket } from 'socket.io';
+import type {
+  ServerToClientEvents,
+  ClientToServerEvents,
+  SocketData,
+} from '../socket.types.js';
+import type { IPlaybackService } from '../../modules/playback/services/playback.service.js';
+import type { IRoomRepository, IRoomSettingsRepository } from '../../modules/rooms/repositories/room.repository.interface.js';
+import type { IMembershipRepository, IBanRepository } from '../../modules/memberships/repositories/membership.repository.interface.js';
+import type { ISessionRepository } from '../../modules/sessions/repositories/session.repository.interface.js';
+import type { IPlaylistService } from '../../modules/playlists/services/playlist.service.js';
+import type { IRbacPolicyEngine } from '../../modules/rbac/rbac-policy-engine.js';
+import type { IEventDispatcher } from '../../core/events/index.js';
+import type { IPresenceCache } from '../../infrastructure/cache/presence.cache.js';
+import type { IChatService } from '../../modules/chat/services/chat.service.js';
+import type { IDistributedLockService } from '../../infrastructure/redis/redis-lock.service.js';
+import type { IRoomPubSubService } from '../../infrastructure/redis/room-pubsub.service.js';
+import { RedisKeys } from '../../infrastructure/redis/redis-keys.js';
+import { DomainEventType } from '../../core/events/index.js';
+import { Permission, type RoomRole } from '../../modules/rbac/permissions.js';
+
+type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>;
+type TypedServer = Server<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>;
+
+export class WatchPartyGateway {
+  constructor(
+    private readonly io: TypedServer,
+    private readonly playbackService: IPlaybackService,
+    private readonly roomRepository: IRoomRepository,
+    private readonly settingsRepository: IRoomSettingsRepository,
+    private readonly membershipRepository: IMembershipRepository,
+    private readonly banRepository: IBanRepository,
+    private readonly sessionRepository: ISessionRepository,
+    private readonly rbacEngine: IRbacPolicyEngine,
+    private readonly eventDispatcher: IEventDispatcher,
+    private readonly presenceCache: IPresenceCache,
+    private readonly chatService: IChatService,
+    private readonly lockService: IDistributedLockService,
+    private readonly playlistService?: IPlaylistService,
+    private readonly roomPubSubService?: IRoomPubSubService
+  ) {
+    this.registerEventSubscriptions();
+    this.registerSocketHandlers();
+  }
+
+  private registerEventSubscriptions(): void {
+    // 1. Pub-Sub Channel Subscription (Multi-Instance & Local Distributed Event Bus)
+    if (this.roomPubSubService) {
+      this.roomPubSubService.subscribe((message) => {
+        const roomChannel = `room:${message.roomId}`;
+        switch (message.type) {
+          case 'PLAYBACK_SYNC':
+            this.io.to(roomChannel).emit('playback:sync', message.payload as any);
+            break;
+          case 'PLAYBACK_ACTION':
+            this.io.to(roomChannel).emit('playback:action', message.payload as any);
+            break;
+          case 'PLAYLIST_SYNC':
+            this.io.to(roomChannel).emit('playlist:sync', message.payload as any);
+            break;
+          case 'ROOM_REACTION':
+            this.io.to(roomChannel).emit('room:reaction', message.payload as any);
+            break;
+          case 'ROOM_SETTINGS_UPDATED':
+            this.io.to(roomChannel).emit('room:settings_updated', message.payload as any);
+            break;
+          case 'ROOM_MEMBER_JOINED':
+            this.io.to(roomChannel).emit('room:member_joined', message.payload as any);
+            break;
+          case 'ROOM_MEMBER_LEFT':
+            this.io.to(roomChannel).emit('room:member_left', message.payload as any);
+            break;
+          case 'ROOM_ROLE_CHANGED':
+            this.io.to(roomChannel).emit('room:role_changed', message.payload as any);
+            break;
+        }
+      });
+    }
+
+    // 2. Domain Events Subscriptions
+    this.eventDispatcher.subscribe(DomainEventType.PLAYBACK_ACTION, (event) => {
+      const payload = event.payload as {
+        roomId: string;
+        actorId: string;
+        action: string;
+        position: number;
+        playbackRate?: number;
+        mediaId?: string | null;
+        version: number;
+      };
+      if (!this.roomPubSubService) {
+        this.io.to(`room:${payload.roomId}`).emit('playback:action', {
+          actorId: payload.actorId,
+          action: payload.action,
+          position: payload.position,
+          playbackRate: payload.playbackRate,
+          mediaId: payload.mediaId,
+          version: payload.version,
+        });
+      }
+    });
+
+    this.eventDispatcher.subscribe(DomainEventType.MEMBER_JOINED, (event) => {
+      const payload = event.payload as { roomId: string; userId: string; role: string; displayName?: string | null };
+      this.io.to(`room:${payload.roomId}`).emit('room:member_joined', {
+        userId: payload.userId,
+        role: payload.role,
+        displayName: payload.displayName,
+      });
+    });
+
+    this.eventDispatcher.subscribe(DomainEventType.PLAYLIST_UPDATED, async (event) => {
+      const payload = event.payload as { roomId: string; playlistId: string; items?: unknown[] };
+      if (payload.items) {
+        this.io.to(`room:${payload.roomId}`).emit('playlist:sync', {
+          playlistId: payload.playlistId,
+          items: payload.items,
+        });
+      } else if (this.playlistService) {
+        try {
+          const pl = await this.playlistService.getPlaylist(payload.playlistId);
+          this.io.to(`room:${payload.roomId}`).emit('playlist:sync', {
+            playlistId: payload.playlistId,
+            items: pl.items || [],
+          });
+        } catch {
+          // ignore
+        }
+      }
+    });
+  }
+
+  private async resolveRoom(roomIdOrCode: string) {
+    if (!roomIdOrCode) return null;
+    const clean = roomIdOrCode.trim();
+    let room = await this.roomRepository.findById(clean);
+    if (!room) {
+      room = await this.roomRepository.findByCode(clean.toUpperCase());
+    }
+    if (!room) {
+      room = await this.roomRepository.findBySlug(clean.toLowerCase());
+    }
+    return room;
+  }
+
+  private registerSocketHandlers(): void {
+    this.io.on('connection', (socket: TypedSocket) => {
+      const user = socket.data.user;
+
+      // Handle room join
+      socket.on('room:join', async (data, callback) => {
+        try {
+          const { roomId } = data;
+          const room = await this.resolveRoom(roomId);
+          if (!room || room.status !== 'ACTIVE') {
+            callback?.({ success: false, error: 'Room is inactive or not found' });
+            return;
+          }
+
+          const canonicalRoomId = room.id;
+
+          // Check ban
+          const ban = await this.banRepository.findActiveBan(canonicalRoomId, user.id);
+          if (ban) {
+            callback?.({ success: false, error: 'User is banned from this room' });
+            return;
+          }
+
+          const channel = `room:${canonicalRoomId}`;
+          await socket.join(channel);
+          socket.data.currentRoomId = canonicalRoomId;
+
+          // Track Redis presence
+          await this.presenceCache.addSocketToRoom(socket.id, user.id, canonicalRoomId);
+
+          // Start WatchSession in relational DB
+          const session = await this.sessionRepository.startWatchSession(canonicalRoomId, user.id);
+          socket.data.watchSessionId = session.id;
+
+          // Ensure membership for non-owner if not already present
+          const isOwner = room.ownerId === user.id || room.ownerId === user.clerkUserId;
+          let membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.id);
+          if (!membership && !isOwner) {
+            try {
+              membership = await this.membershipRepository.create({
+                roomId: canonicalRoomId,
+                userId: user.id,
+                role: 'PARTICIPANT',
+              });
+            } catch {
+              // Ignore if already joined concurrently
+            }
+          }
+
+          const currentState = await this.playbackService.getState(canonicalRoomId);
+
+          callback?.({ success: true, state: currentState });
+          socket.to(channel).emit('room:member_joined', {
+            userId: user.id,
+            role: isOwner ? 'HOST' : (membership?.role || 'PARTICIPANT'),
+            displayName: user.displayName,
+          });
+        } catch (err) {
+          console.error('[Socket room:join] error:', err);
+          callback?.({ success: false, error: 'Failed to join room' });
+        }
+      });
+
+      // Handle playback action (Play, Pause, Seek, Rate, Media) with Distributed Locking
+      socket.on('playback:action', async (data, callback) => {
+        try {
+          const { roomId, action, position, playbackRate, mediaId } = data;
+          const room = await this.resolveRoom(roomId);
+          if (!room) {
+            callback?.({ success: false, error: 'Room not found' });
+            return;
+          }
+
+          const canonicalRoomId = room.id;
+
+          // Check RBAC permission for PLAYBACK_CONTROL
+          const settings = await this.settingsRepository.findByRoomId(canonicalRoomId);
+          const membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.id);
+          const isOwner = room.ownerId === user.id || room.ownerId === user.clerkUserId;
+          const role: RoomRole = isOwner
+            ? 'HOST'
+            : (membership?.role || (settings?.onlyHostCanControlPlayback ? 'VIEWER' : 'PARTICIPANT'));
+
+          const isAllowed = this.rbacEngine.can(role, settings, Permission.PLAYBACK_CONTROL);
+          if (!isAllowed) {
+            callback?.({ success: false, error: 'Permission denied for playback control' });
+            return;
+          }
+
+          // Execute with Redis distributed lock to prevent concurrency race conditions
+          const lockKey = RedisKeys.lockPlayback(canonicalRoomId);
+          const updatedState = await this.lockService.withLock(lockKey, 3000, async () => {
+            return this.playbackService.dispatchAction(canonicalRoomId, user.id, {
+              action,
+              position,
+              playbackRate,
+              mediaId,
+            });
+          });
+
+          // Broadcast authoritative sync to all room members
+          this.io.to(`room:${canonicalRoomId}`).emit('playback:sync', updatedState);
+          callback?.({ success: true, state: updatedState });
+        } catch (err) {
+          console.error('[Socket playback:action] error:', err);
+          callback?.({ success: false, error: err instanceof Error ? err.message : 'Action failed' });
+        }
+      });
+
+      // Handle playlist actions (Add, Remove, Reorder)
+      socket.on('playlist:action', async (data, callback) => {
+        try {
+          const { roomId, playlistId, action, payload } = data;
+          if (!this.playlistService) {
+            callback?.({ success: false, error: 'Playlist service unavailable' });
+            return;
+          }
+
+          const room = await this.resolveRoom(roomId);
+          if (!room) {
+            callback?.({ success: false, error: 'Room not found' });
+            return;
+          }
+
+          const canonicalRoomId = room.id;
+          const settings = await this.settingsRepository.findByRoomId(canonicalRoomId);
+          const membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.id);
+          const isOwner = room.ownerId === user.id || room.ownerId === user.clerkUserId;
+          const role: RoomRole = isOwner
+            ? 'HOST'
+            : (membership?.role || (settings?.onlyHostCanManagePlaylist ? 'VIEWER' : 'PARTICIPANT'));
+
+          const isAllowed = this.rbacEngine.can(role, settings, Permission.PLAYLIST_MANAGE);
+          if (!isAllowed) {
+            callback?.({ success: false, error: 'Permission denied to manage playlist' });
+            return;
+          }
+
+          const targetPlaylistId = playlistId || (await this.playlistService.getOrCreateDefaultPlaylist(canonicalRoomId, user.id)).id;
+
+          if (action === 'ADD') {
+            const addPayload = payload as { url: string; title?: string };
+            await this.playlistService.addItem(canonicalRoomId, targetPlaylistId, user.id, addPayload);
+          } else if (action === 'REMOVE') {
+            const removePayload = payload as { itemId: string };
+            await this.playlistService.removeItem(removePayload.itemId);
+          } else if (action === 'REORDER') {
+            const reorderPayload = payload as { itemIds: string[] };
+            await this.playlistService.reorderItems(targetPlaylistId, reorderPayload.itemIds);
+          }
+
+          const updatedPlaylist = await this.playlistService.getPlaylist(targetPlaylistId);
+          const playlistPayload = {
+            playlistId: targetPlaylistId,
+            items: updatedPlaylist.items || [],
+          };
+
+          if (this.roomPubSubService) {
+            await this.roomPubSubService.publish(canonicalRoomId, 'PLAYLIST_SYNC', playlistPayload, user.id);
+          } else {
+            this.io.to(`room:${canonicalRoomId}`).emit('playlist:sync', playlistPayload);
+          }
+
+          callback?.({ success: true });
+        } catch (err) {
+          console.error('[Socket playlist:action] error:', err);
+          callback?.({ success: false, error: err instanceof Error ? err.message : 'Playlist action failed' });
+        }
+      });
+
+      // Handle live floating emoji reactions
+      socket.on('room:reaction', async (data) => {
+        try {
+          const { roomId, emoji } = data;
+          if (!roomId || !emoji) return;
+
+          const room = await this.resolveRoom(roomId);
+          const canonicalRoomId = room ? room.id : roomId;
+
+          const reactionPayload = {
+            userId: user.id,
+            userName: user.displayName || user.email || 'Watcher',
+            emoji,
+          };
+
+          if (this.roomPubSubService) {
+            this.roomPubSubService.publish(canonicalRoomId, 'ROOM_REACTION', reactionPayload, user.id).catch(() => {});
+          } else {
+            this.io.to(`room:${canonicalRoomId}`).emit('room:reaction', reactionPayload);
+          }
+        } catch (err) {
+          console.warn('[Socket room:reaction warning]:', err);
+        }
+      });
+
+      // Handle live room settings update
+      socket.on('room:settings_update', async (data, callback) => {
+        try {
+          const { roomId, settings } = data;
+          const room = await this.resolveRoom(roomId);
+          if (!room) {
+            callback?.({ success: false, error: 'Room not found' });
+            return;
+          }
+
+          const canonicalRoomId = room.id;
+          const isOwner = room.ownerId === user.id || room.ownerId === user.clerkUserId;
+          if (!isOwner) {
+            callback?.({ success: false, error: 'Only room host can modify settings' });
+            return;
+          }
+
+          const updated = await this.settingsRepository.update(canonicalRoomId, settings as any);
+          const settingsPayload = {
+            roomId: canonicalRoomId,
+            settings: updated,
+          };
+
+          if (this.roomPubSubService) {
+            await this.roomPubSubService.publish(canonicalRoomId, 'ROOM_SETTINGS_UPDATED', settingsPayload, user.id);
+          } else {
+            this.io.to(`room:${canonicalRoomId}`).emit('room:settings_updated', settingsPayload);
+          }
+
+          callback?.({ success: true });
+        } catch (err) {
+          console.error('[Socket room:settings_update] error:', err);
+          callback?.({ success: false, error: 'Settings update failed' });
+        }
+      });
+
+      // Handle heartbeat
+      socket.on('playback:heartbeat', async () => {
+        if (socket.data.watchSessionId) {
+          await this.sessionRepository.heartbeatWatchSession(socket.data.watchSessionId);
+        }
+      });
+
+      // Handle chat messages with MongoDB persistence and rate limiting
+      socket.on('chat:send', async (data) => {
+        try {
+          const { roomId, text } = data;
+          if (!text || text.trim().length === 0) return;
+
+          const room = await this.resolveRoom(roomId);
+          const canonicalRoomId = room ? room.id : roomId;
+
+          const savedMessage = await this.chatService.sendMessage(user.id, {
+            roomId: canonicalRoomId,
+            message: text.trim(),
+            type: 'TEXT',
+          });
+
+          const messagePayload = {
+            id: savedMessage.id,
+            senderId: user.id,
+            senderName: user.displayName || user.email || 'Anonymous',
+            text: savedMessage.message,
+            sentAt: savedMessage.createdAt.toISOString(),
+          };
+
+          this.io.to(`room:${canonicalRoomId}`).emit('chat:message', messagePayload);
+        } catch (err) {
+          console.warn('[Socket chat:send warning]:', err instanceof Error ? err.message : err);
+        }
+      });
+
+      // Handle WebRTC Screen Sharing signaling (with RBAC authorization)
+      socket.on('screenshare:signal', async (data) => {
+        try {
+          const { roomId, signal } = data;
+          const room = await this.resolveRoom(roomId);
+          if (!room) return;
+
+          const canonicalRoomId = room.id;
+
+          // Verify RBAC permission for SCREEN_SHARE
+          const settings = await this.settingsRepository.findByRoomId(canonicalRoomId);
+          const membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.id);
+          const isOwner = room.ownerId === user.id || room.ownerId === user.clerkUserId;
+          const role: RoomRole = isOwner
+            ? 'HOST'
+            : (membership?.role || 'VIEWER');
+
+          const isAllowed = this.rbacEngine.can(role, settings, Permission.SCREEN_SHARE);
+          if (!isAllowed) return;
+
+          const channel = `room:${canonicalRoomId}`;
+          socket.to(channel).emit('screenshare:signal', {
+            senderId: user.id,
+            signal,
+          });
+        } catch (err) {
+          console.warn('[Socket screenshare:signal] error:', err);
+        }
+      });
+
+      // Handle explicit room leave (client emits on unmount before disconnect)
+      socket.on('room:leave', async (data) => {
+        try {
+          const { roomId } = data;
+          const room = await this.resolveRoom(roomId);
+          const canonicalRoomId = room ? room.id : roomId;
+          const channel = `room:${canonicalRoomId}`;
+
+          // Clean up Redis presence
+          await this.presenceCache.removeSocket(socket.id);
+
+          // End watch session
+          if (socket.data.watchSessionId) {
+            await this.sessionRepository.endWatchSession(socket.data.watchSessionId);
+            socket.data.watchSessionId = undefined;
+          }
+
+          // Leave socket.io room channel
+          await socket.leave(channel);
+          socket.data.currentRoomId = undefined;
+
+          // Broadcast to remaining room members
+          socket.to(channel).emit('room:member_left', {
+            userId: user.id,
+          });
+        } catch (err) {
+          console.warn('[Socket room:leave] error:', err);
+        }
+      });
+
+      // Handle disconnect
+      socket.on('disconnect', async () => {
+        const { roomId } = await this.presenceCache.removeSocket(socket.id);
+
+        if (socket.data.watchSessionId) {
+          await this.sessionRepository.endWatchSession(socket.data.watchSessionId);
+        }
+
+        const activeRoom = roomId || socket.data.currentRoomId;
+        if (activeRoom) {
+          socket.to(`room:${activeRoom}`).emit('room:member_left', {
+            userId: user.id,
+          });
+        }
+      });
+    });
+  }
+}

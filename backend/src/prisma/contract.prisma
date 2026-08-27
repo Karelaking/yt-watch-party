@@ -1,0 +1,926 @@
+// use prisma-next
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum RoomStatus {
+  ACTIVE
+  PAUSED
+  ENDED
+  ARCHIVED
+}
+
+enum RoomVisibility {
+  PUBLIC
+  PRIVATE
+  UNLISTED
+}
+
+enum RoomRole {
+  HOST
+  MODERATOR
+  PARTICIPANT
+  VIEWER
+}
+
+enum MembershipStatus {
+  ACTIVE
+  LEFT
+  REMOVED
+  BANNED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  REVOKED
+}
+
+enum BanType {
+  USER
+  IP
+  DEVICE
+}
+
+enum MediaType {
+  VIDEO
+  AUDIO
+  STREAM
+  SCREEN
+  EXTERNAL
+}
+
+enum MediaProvider {
+  YOUTUBE
+  VIMEO
+  TWITCH
+  DIRECT_URL
+  HLS
+  DASH
+  CUSTOM
+}
+
+enum PlaylistStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum WatchSessionStatus {
+  ACTIVE
+  ENDED
+}
+
+enum ScreenShareStatus {
+  ACTIVE
+  ENDED
+}
+
+enum WebhookStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+enum WebhookProvider {
+  CLERK
+}
+
+enum RoomEventType {
+  ROOM_CREATED
+  ROOM_UPDATED
+  ROOM_ENDED
+
+  USER_JOINED
+  USER_LEFT
+  USER_REMOVED
+  USER_BANNED
+
+  ROLE_ASSIGNED
+  HOST_TRANSFERRED
+
+  MEDIA_ADDED
+  MEDIA_REMOVED
+  MEDIA_CHANGED
+
+  PLAYBACK_PLAY
+  PLAYBACK_PAUSE
+  PLAYBACK_SEEK
+  PLAYBACK_RATE_CHANGED
+
+  PLAYLIST_CREATED
+  PLAYLIST_UPDATED
+  PLAYLIST_ITEM_ADDED
+  PLAYLIST_ITEM_REMOVED
+  PLAYLIST_ITEM_REORDERED
+
+  SCREEN_SHARE_STARTED
+  SCREEN_SHARE_ENDED
+
+  SETTINGS_UPDATED
+}
+
+enum PlaybackAction {
+  PLAY
+  PAUSE
+  SEEK
+  CHANGE_VIDEO
+  CHANGE_RATE
+}
+
+enum DeviceType {
+  WEB
+  MOBILE
+  TABLET
+  DESKTOP
+  UNKNOWN
+}
+
+
+// ============================================================
+// USER
+// Clerk is the source of truth for authentication.
+// PostgreSQL stores application-specific user information.
+// ============================================================
+
+model User {
+  id String @id @default(uuid())
+
+  // Clerk user ID
+  clerkUserId String @unique
+
+  username String? @unique
+  displayName String?
+  avatarUrl String?
+
+  email String?
+
+  status UserStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  deletedAt DateTime?
+
+  // ----------------------------------------------------------
+  // Relations
+  // ----------------------------------------------------------
+
+  ownedRooms Room[] @relation("RoomOwner")
+
+  memberships RoomMembership[]
+
+  invitationsSent RoomInvitation[] @relation("InvitationSender")
+
+  invitationsReceived RoomInvitation[] @relation("InvitationRecipient")
+
+  bansCreated RoomBan[] @relation("BanCreator")
+
+  bans RoomBan[] @relation("BannedUser")
+
+  watchSessions WatchSession[]
+
+  screenShareSessions ScreenShareSession[]
+
+  playlistsCreated Playlist[] @relation("PlaylistCreator")
+
+  roomEvents RoomEvent[] @relation("RoomEventActor")
+
+  playbackActions PlaybackHistory[] @relation("PlaybackActor")
+
+  webhookEvents WebhookEvent[] @relation("WebhookUser")
+
+  devices UserDevice[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([email])
+
+  @@map("users")
+}
+
+
+// ============================================================
+// USER DEVICES
+// Useful for tracking sessions/devices without storing auth
+// credentials.
+// ============================================================
+
+model UserDevice {
+  id String @id @default(uuid())
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  deviceType DeviceType @default(UNKNOWN)
+
+  deviceName String?
+  browser String?
+  operatingSystem String?
+
+  lastIpHash String?
+
+  lastSeenAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, lastSeenAt])
+
+  @@map("user_devices")
+}
+
+
+// ============================================================
+// ROOM
+// ============================================================
+
+model Room {
+  id String @id @default(uuid())
+
+  // Public room code used for joining.
+  // Example: ABC123
+  code String @unique
+
+  // Optional internal slug.
+  slug String? @unique
+
+  name String
+
+  description String?
+
+  ownerId String
+  owner User @relation("RoomOwner", fields: [ownerId], references: [id])
+
+  status RoomStatus @default(ACTIVE)
+
+  visibility RoomVisibility @default(PRIVATE)
+
+  // Maximum simultaneous participants.
+  maxMembers Int @default(50)
+
+  // Whether the room can be discovered publicly.
+  discoverable Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  endedAt DateTime?
+  archivedAt DateTime?
+
+  // ----------------------------------------------------------
+  // Relations
+  // ----------------------------------------------------------
+
+  settings RoomSettings?
+
+  memberships RoomMembership[]
+
+  invitations RoomInvitation[]
+
+  bans RoomBan[]
+
+  media Media[]
+
+  playlists Playlist[]
+
+  playbackState PlaybackState?
+
+  watchSessions WatchSession[]
+
+  screenShareSessions ScreenShareSession[]
+
+  events RoomEvent[]
+
+  playbackHistory PlaybackHistory[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([visibility])
+  @@index([createdAt])
+  @@index([discoverable, status])
+
+  @@map("rooms")
+}
+
+
+// ============================================================
+// ROOM SETTINGS
+// ============================================================
+
+model RoomSettings {
+  id String @id @default(uuid())
+
+  roomId String @unique
+
+  room Room @relation( fields: [roomId], references: [id], onDelete: Cascade)
+
+  // ----------------------------------------------------------
+  // Joining
+  // ----------------------------------------------------------
+
+  allowGuestJoin Boolean @default(false)
+
+  requireApprovalToJoin Boolean @default(false)
+
+  allowMemberInvite Boolean @default(true)
+
+  // ----------------------------------------------------------
+  // Chat
+  // ----------------------------------------------------------
+
+  allowChat Boolean @default(true)
+
+  slowModeSeconds Int @default(0)
+
+  // ----------------------------------------------------------
+  // Screen sharing
+  // ----------------------------------------------------------
+
+  allowScreenShare Boolean @default(true)
+
+  // ----------------------------------------------------------
+  // Playback
+  // ----------------------------------------------------------
+
+  syncPlayback Boolean @default(true)
+
+  autoplayNext Boolean @default(true)
+
+  onlyHostCanControlPlayback Boolean @default(false)
+
+  allowModeratorPlaybackControl Boolean @default(true)
+
+  // ----------------------------------------------------------
+  // Playlist
+  // ----------------------------------------------------------
+
+  allowPlaylistControl Boolean @default(true)
+
+  onlyHostCanManagePlaylist Boolean @default(false)
+
+  // ----------------------------------------------------------
+  // Room lifecycle
+  // ----------------------------------------------------------
+
+  disconnectOnHostLeave Boolean @default(false)
+
+  // Automatically archive room after inactivity.
+  autoArchive Boolean @default(false)
+
+  autoArchiveAfterMinutes Int?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @default(now())
+
+  @@map("room_settings")
+}
+
+
+// ============================================================
+// ROOM MEMBERSHIP
+// ============================================================
+
+model RoomMembership {
+  id String @id @default(uuid())
+
+  roomId String
+
+  userId String
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  user User @relation( fields: [userId], references: [id], onDelete: Cascade)
+
+  // ----------------------------------------------------------
+  // Role
+  // ----------------------------------------------------------
+
+  role RoomRole @default(PARTICIPANT)
+
+  status MembershipStatus @default(ACTIVE)
+
+  // Optional nickname inside the room.
+  nickname String?
+
+  // ----------------------------------------------------------
+  // Membership timestamps
+  // ----------------------------------------------------------
+
+  joinedAt DateTime @default(now())
+
+  leftAt DateTime?
+
+  removedAt DateTime?
+
+  lastSeenAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @default(now())
+
+  // ----------------------------------------------------------
+  // Relations
+  // ----------------------------------------------------------
+
+  roleHistory RoleHistory[]
+
+  @@unique([roomId, userId])
+
+  @@index([roomId, status])
+  @@index([roomId, role])
+  @@index([userId, status])
+  @@index([roomId, lastSeenAt])
+
+  @@map("room_memberships")
+}
+
+
+// ============================================================
+// ROLE HISTORY
+// Useful for auditing role changes.
+// ============================================================
+
+model RoleHistory {
+  id String @id @default(uuid())
+
+  membershipId String
+
+  membership RoomMembership @relation( fields: [membershipId], references: [id], onDelete: Cascade)
+
+  previousRole RoomRole?
+
+  newRole RoomRole
+
+  changedById String
+
+  changedAt DateTime @default(now())
+
+  reason String?
+
+  @@index([membershipId, changedAt])
+
+  @@map("role_history")
+}
+
+
+// ============================================================
+// ROOM INVITATION
+// ============================================================
+
+model RoomInvitation {
+  id String @id @default(uuid())
+
+  roomId String
+
+  room Room @relation(fields: [roomId],references: [id],onDelete: Cascade)
+
+  inviterId String
+
+  inviter User @relation("InvitationSender", fields: [inviterId], references: [id])
+
+  inviteeId String?
+
+  invitee User? @relation("InvitationRecipient", fields: [inviteeId], references: [id])
+
+  // Useful when inviting someone who does not have
+  // an account yet.
+  inviteeEmail String?
+
+  // NEVER store raw invitation tokens.
+  // Store a cryptographic hash.
+  tokenHash String @unique
+
+  status InvitationStatus @default(PENDING)
+
+  expiresAt DateTime
+
+  acceptedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @default(now())
+
+  @@index([roomId, status])
+  @@index([inviteeId])
+  @@index([inviteeEmail])
+  @@index([expiresAt])
+
+  @@map("room_invitations")
+}
+
+
+// ============================================================
+// ROOM BAN
+// ============================================================
+
+model RoomBan {
+  id String @id @default(uuid())
+
+  roomId String
+
+  room Room @relation( fields: [roomId], references: [id], onDelete: Cascade)
+
+  userId String?
+
+  user User? @relation( "BannedUser", fields: [userId], references: [id])
+
+  createdById String
+
+  createdBy User @relation( "BanCreator", fields: [createdById], references: [id])
+
+  type BanType @default(USER)
+
+  reason String?
+
+  // Null = permanent ban.
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([roomId, userId])
+  @@index([roomId, expiresAt])
+  @@index([roomId, type])
+
+  @@map("room_bans")
+}
+
+
+// ============================================================
+// MEDIA
+//
+// A room can contain multiple media items.
+// Currently YouTube is the primary use case.
+// ============================================================
+
+model Media {
+  id String @id @default(uuid())
+
+  roomId String
+
+  room Room @relation( fields: [roomId], references: [id], onDelete: Cascade)
+
+  type MediaType @default(VIDEO)
+
+  provider MediaProvider @default(YOUTUBE)
+
+  // YouTube video ID.
+  // Example: dQw4w9WgXcQ
+  externalId String
+
+  sourceUrl String
+
+  title String?
+
+  description String?
+
+  thumbnailUrl String?
+
+  duration Float?
+
+  // Provider-specific information.
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @default(now())
+
+  // ----------------------------------------------------------
+  // Relations
+  // ----------------------------------------------------------
+
+  playlistItems PlaylistItem[]
+
+  playbackStates PlaybackState[]
+
+  @@index([roomId])
+  @@index([roomId, provider])
+  @@index([provider, externalId])
+  @@index([createdAt])
+
+  @@map("media")
+}
+
+
+// ============================================================
+// PLAYLIST
+// ============================================================
+
+model Playlist {
+  id String @id @default(uuid())
+
+  roomId String
+
+  room Room @relation( fields: [roomId], references: [id], onDelete: Cascade)
+
+  createdById String
+
+  createdBy User @relation( "PlaylistCreator", fields: [createdById], references: [id])
+
+  name String
+
+  description String?
+
+  status PlaylistStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @default(now())
+
+  items PlaylistItem[]
+
+  @@index([roomId, status])
+  @@index([createdById])
+
+  @@map("playlists")
+}
+
+
+// ============================================================
+// PLAYLIST ITEM
+// ============================================================
+
+model PlaylistItem {
+  id String @id @default(uuid())
+
+  playlistId String
+
+  playlist Playlist @relation( fields: [playlistId], references: [id], onDelete: Cascade)
+
+  mediaId String
+
+  media Media @relation( fields: [mediaId], references: [id], onDelete: Cascade)
+
+  // Position inside playlist.
+  position Int
+
+  addedById String?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @default(now())
+
+  @@unique([playlistId, position])
+
+  @@index([playlistId])
+  @@index([mediaId])
+
+  @@map("playlist_items")
+}
+
+
+// ============================================================
+// PLAYBACK STATE
+//
+// This is the durable/authoritative playback state.
+//
+// Redis will hold the hot copy for realtime operations.
+// ============================================================
+
+model PlaybackState {
+  id String @id @default(uuid())
+
+  roomId String @unique
+
+  room Room @relation( fields: [roomId], references: [id], onDelete: Cascade)
+
+  // Currently playing media.
+  mediaId String?
+
+  media Media? @relation( fields: [mediaId], references: [id], onDelete: SetNull)
+
+  // Current playback position in seconds.
+  position Float @default(0)
+
+  // Is video playing?
+  isPlaying Boolean @default(false)
+
+  // Playback speed.
+  playbackRate Float @default(1.0)
+
+  // Optimistic concurrency / ordering.
+  version BigInt @default(0)
+
+  // Server-side timestamp.
+  serverTimestamp DateTime @default(now())
+
+  lastAction PlaybackAction?
+
+  lastActionById String?
+
+  updatedAt DateTime @default(now())
+
+  @@index([roomId])
+  @@index([mediaId])
+
+  @@map("playback_states")
+}
+
+
+// ============================================================
+// PLAYBACK HISTORY
+//
+// Do NOT write every heartbeat here.
+// Store meaningful playback operations only.
+// ============================================================
+
+model PlaybackHistory {
+  id String @id @default(uuid())
+
+  roomId String
+
+  room Room @relation( fields: [roomId], references: [id], onDelete: Cascade)
+
+  actorId String
+
+  actor User @relation( "PlaybackActor", fields: [actorId], references: [id] )
+
+  action PlaybackAction
+
+  mediaId String?
+
+  position Float?
+
+  playbackRate Float?
+
+  version BigInt?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([roomId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([roomId, action, createdAt])
+
+  @@map("playback_history")
+}
+
+
+// ============================================================
+// WATCH SESSION
+//
+// Represents a user's actual participation in a room session.
+// A room can have many watch sessions over its lifetime.
+// ============================================================
+
+model WatchSession {
+  id String @id @default(uuid())
+
+  roomId String
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  userId String
+
+  user User @relation( fields: [userId], references: [id], onDelete: Cascade)
+
+  status WatchSessionStatus @default(ACTIVE)
+
+  joinedAt DateTime @default(now())
+
+  leftAt DateTime?
+
+  // Total active watching time.
+  totalWatchSeconds Int @default(0)
+
+  // Useful for analytics.
+  lastHeartbeatAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @default(now())
+
+  @@index([roomId, status])
+  @@index([userId, status])
+  @@index([roomId, joinedAt])
+  @@index([userId, joinedAt])
+
+  @@map("watch_sessions")
+}
+
+
+// ============================================================
+// SCREEN SHARE SESSION
+//
+// WebRTC signaling itself should NOT be persisted here.
+// ============================================================
+
+model ScreenShareSession {
+  id String @id @default(uuid())
+
+  roomId String
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  userId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status ScreenShareStatus @default(ACTIVE)
+
+  startedAt DateTime @default(now())
+
+  endedAt DateTime?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @default(now())
+
+  @@index([roomId, status])
+  @@index([userId])
+  @@index([roomId, startedAt])
+
+  @@map("screen_share_sessions")
+}
+
+
+// ============================================================
+// ROOM EVENT / AUDIT LOG
+//
+// Store important business events.
+// Do NOT store every Socket.IO packet here.
+// ============================================================
+
+model RoomEvent {
+  id String @id @default(uuid())
+
+  roomId String
+
+  room Room @relation( fields: [roomId], references: [id], onDelete: Cascade)
+
+  actorId String?
+
+  actor User? @relation( "RoomEventActor", fields: [actorId], references: [id])
+
+  type RoomEventType
+
+  payload Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([roomId, createdAt])
+  @@index([roomId, type, createdAt])
+  @@index([actorId, createdAt])
+
+  @@map("room_events")
+}
+
+
+// ============================================================
+// CLERK WEBHOOK EVENTS
+//
+// Required for idempotent Clerk synchronization.
+// ============================================================
+
+model WebhookEvent {
+  id String @id @default(uuid())
+
+  provider WebhookProvider
+
+  // Clerk event ID.
+  eventId String @unique
+
+  eventType String
+
+  // Raw webhook payload.
+  payload Json
+
+  status WebhookStatus @default(PENDING)
+
+  attempts Int @default(0)
+
+  errorMessage String?
+
+  // Optional user relation after extracting Clerk user ID.
+  userId String?
+
+  user User? @relation( "WebhookUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  receivedAt DateTime @default(now())
+
+  processedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @default(now())
+
+  @@index([provider, eventType])
+  @@index([status])
+  @@index([receivedAt])
+  @@index([userId])
+
+  @@map("webhook_events")
+}
