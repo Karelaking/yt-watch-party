@@ -25,7 +25,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.string().default('3001').transform((val) => parseInt(val, 10)),
   HOST: z.string().default('0.0.0.0'),
-  CORS_ORIGIN: z.string().default('http://localhost:3000,http://localhost:3001'),
+  CORS_ORIGIN: z.string().default('https://watchparty-yt.vercel.app,http://localhost:3000,http://localhost:3001'),
 
   // NeonDB PostgreSQL
   DATABASE_URL: z.string().default('postgresql://postgres:postgres@localhost:5432/watchparty?schema=public'),

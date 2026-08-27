@@ -32,18 +32,20 @@ export function createApp(): Express {
   );
 
   const allowedOrigins = [
+    'https://watchparty-yt.vercel.app',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3001',
-    ...env.CORS_ORIGIN.split(',').map((s) => s.trim()),
+    ...env.CORS_ORIGIN.split(',').map((s) => s.trim().replace(/\/$/, '')),
   ];
   app.use(
     cors({
       origin: (origin, callback) => {
+        const cleanOrigin = origin ? origin.replace(/\/$/, '') : '';
         if (
           !origin ||
-          allowedOrigins.includes(origin) ||
+          allowedOrigins.includes(cleanOrigin) ||
           allowedOrigins.includes('*') ||
           (env.NODE_ENV === 'development' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin))
         ) {

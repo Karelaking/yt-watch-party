@@ -15,14 +15,25 @@ import type {
 export function createSocketServer(
   httpServer: HttpServer
 ): SocketIOServer<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData> {
-  const allowedOrigins = env.CORS_ORIGIN.split(',').map((s) => s.trim());
+  const allowedOrigins = [
+    'https://watchparty-yt.vercel.app',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    ...env.CORS_ORIGIN.split(',').map((s) => s.trim().replace(/\/$/, '')),
+  ];
 
   const io = new SocketIOServer<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>(
     httpServer,
     {
       cors: {
         origin: (origin, callback) => {
-          if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+          const cleanOrigin = origin ? origin.replace(/\/$/, '') : '';
+          if (
+            !origin ||
+            allowedOrigins.includes(cleanOrigin) ||
+            allowedOrigins.includes('*') ||
+            (env.NODE_ENV === 'development' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin))
+          ) {
             callback(null, true);
           } else {
             callback(new Error('Not allowed by CORS'));
