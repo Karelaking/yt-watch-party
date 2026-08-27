@@ -11,9 +11,6 @@
     "noEmit": false,
     "sourceMap": true,
     "declaration": true,
-    "types": [
-      "node"
-    ],
     "resolveJsonModule": true
   },
   "include": [

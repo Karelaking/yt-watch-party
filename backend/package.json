@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "start:dev": "tsx src/index.ts",
-    "build": "prisma contract emit && tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "db:emit": "prisma contract emit",
@@ -18,8 +18,7 @@
     "db:migrate": "prisma db migrate",
     "db:migration:plan": "prisma migration plan",
     "db:migration:status": "prisma migration status",
-    "contract:emit": "prisma contract emit",
-    "postinstall": "prisma contract emit"
+    "contract:emit": "prisma contract emit"
   },
   "keywords": [],
   "author": "",
@@ -34,6 +33,10 @@
     "@prisma/client": "^6.4.1",
     "@prisma/orm-postgres": "^8.0.0-rc.8",
     "@socket.io/redis-adapter": "^8.3.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.3.0",
+    "@types/pg": "^8.23.1",
     "@upstash/redis": "^1.38.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -42,18 +45,14 @@
     "ioredis": "^5.6.0",
     "mongoose": "^8.12.1",
     "pg": "^8.23.0",
+    "prisma": "^8.0.0-rc.12",
     "socket.io": "^4.8.3",
     "svix": "^2.1.0",
     "tsx": "^4.23.12",
+    "typescript": "^7.0.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/node": "^26.3.0",
-    "@types/pg": "^8.23.1",
-    "prisma": "^8.0.0-rc.12",
-    "typescript": "^7.0.2",
     "vitest": "^4.1.11"
   }
 }

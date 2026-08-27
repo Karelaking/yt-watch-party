@@ -1,4 +1,4 @@
-﻿# Multi-stage production build for Railway
+﻿# Multi-stage production build for Railway (inside backend directory)
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -13,7 +13,7 @@ COPY src ./src
 
 RUN npm run build
 
-# Production runtime image
+# Production runner image
 FROM node:20-alpine AS runner
 
 WORKDIR /app
