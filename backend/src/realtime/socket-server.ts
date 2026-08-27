@@ -50,6 +50,12 @@ export function createSocketServer(
   try {
     const pubClient = createRedisClient();
     const subClient = pubClient.duplicate();
+    pubClient.on('error', (err) => {
+      console.warn('[Socket.IO Redis Pub Client Error]:', err instanceof Error ? err.message : err);
+    });
+    subClient.on('error', (err) => {
+      console.warn('[Socket.IO Redis Sub Client Error]:', err instanceof Error ? err.message : err);
+    });
     io.adapter(createAdapter(pubClient, subClient));
     console.log('📡 Socket.IO Redis adapter attached for horizontal scaling');
   } catch (err) {
