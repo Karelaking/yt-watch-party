@@ -1,5 +1,5 @@
-﻿# Production Multi-Stage Dockerfile for Railway
-FROM node:20-alpine AS builder
+# Multi-stage production build for Railway monorepo
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -8,13 +8,13 @@ COPY backend/prisma.config.ts ./backend/
 COPY backend/tsconfig*.json ./backend/
 
 WORKDIR /app/backend
-RUN npm ci
+RUN npm install
 
 COPY backend/src ./src
 RUN npm run build
 
 # Production runner image
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app/backend
 
@@ -23,7 +23,7 @@ ENV PORT=3001
 
 COPY backend/package*.json ./
 
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 COPY --from=builder /app/backend/dist ./dist
 COPY --from=builder /app/backend/src/prisma ./src/prisma

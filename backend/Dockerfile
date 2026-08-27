@@ -1,5 +1,5 @@
-﻿# Multi-stage production build for Railway (inside backend directory)
-FROM node:20-alpine AS builder
+# Multi-stage production build for Railway (inside backend directory)
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -7,14 +7,14 @@ COPY package*.json ./
 COPY prisma.config.ts ./
 COPY tsconfig*.json ./
 
-RUN npm ci
+RUN npm install
 
 COPY src ./src
 
 RUN npm run build
 
 # Production runner image
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ ENV PORT=3001
 
 COPY package*.json ./
 
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src/prisma ./src/prisma
