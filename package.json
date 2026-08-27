@@ -1,0 +1,14 @@
+﻿{
+  "name": "yt-watch-party",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix backend run build",
+    "start": "npm --prefix backend start",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
