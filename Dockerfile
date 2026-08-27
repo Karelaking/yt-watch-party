@@ -1,4 +1,4 @@
-﻿# Multi-stage production build for Railway monorepo
+﻿# Production Multi-Stage Dockerfile for Railway
 FROM node:20-alpine AS builder
 
 WORKDIR /app
