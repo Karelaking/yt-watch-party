@@ -21,32 +21,6 @@ import type { IDistributedLockService } from './infrastructure/redis/redis-lock.
 import type { IRoomPubSubService } from './infrastructure/redis/room-pubsub.service.js';
 
 async function bootstrap(): Promise<void> {
-  console.log('🔄 Initializing database connections...');
-
-  // Initialize NeonDB (Prisma), MongoDB (Mongoose), and Redis (ioredis)
-  try {
-    await prisma.$connect();
-    console.log('🐘 NeonDB (PostgreSQL) connected via Prisma ORM');
-  } catch (err) {
-    console.warn('⚠️ NeonDB connection warning (will retry on query):', err instanceof Error ? err.message : err);
-  }
-
-  try {
-    await connectMongoose();
-  } catch (err) {
-    console.warn('⚠️ MongoDB connection warning:', err instanceof Error ? err.message : err);
-  }
-
-  try {
-    const redis = getRedis();
-    if (redis.status === 'wait') {
-      await redis.connect();
-      console.log('⚡ Redis (Upstash) connected successfully via TLS');
-    }
-  } catch (err) {
-    console.warn('⚠️ Redis connection warning:', err instanceof Error ? err.message : err);
-  }
-
   const app = createApp();
   const httpServer = createServer(app);
 
@@ -71,11 +45,26 @@ async function bootstrap(): Promise<void> {
     container.resolve<IRoomPubSubService>(TYPES.RoomPubSubService)
   );
 
+  // Start HTTP and WebSocket Server immediately so health checks succeed instantly
   httpServer.listen(env.PORT, '0.0.0.0', () => {
     console.log(`🚀 YouTube Watch Party Server running on http://0.0.0.0:${env.PORT}`);
     console.log(`📡 WebSockets listening on ws://0.0.0.0:${env.PORT}`);
     console.log(`🌍 Environment: ${env.NODE_ENV}`);
   });
+
+  // Initialize database connections asynchronously in background
+  console.log('🔄 Initializing database connections in background...');
+  Promise.allSettled([
+    prisma.$connect().then(() => console.log('🐘 NeonDB (PostgreSQL) connected via Prisma ORM')),
+    connectMongoose().then(() => console.log('🍃 MongoDB connected')).catch((err) => console.warn('⚠️ MongoDB connection warning:', err instanceof Error ? err.message : err)),
+    (async () => {
+      const redis = getRedis();
+      if (redis.status === 'wait') {
+        await redis.connect();
+        console.log('⚡ Redis (Upstash) connected successfully via TLS');
+      }
+    })().catch((err) => console.warn('⚠️ Redis connection warning:', err instanceof Error ? err.message : err)),
+  ]);
 
 
   // Graceful Shutdown Handler
