@@ -61,69 +61,77 @@ export class PrismaRoomRepository implements IRoomRepository {
   }
 
   public async listPublic(limit: number = 20, offset: number = 0): Promise<RoomEntity[]> {
-    const rooms = await this.prisma.room.findMany({
-      where: { visibility: 'PUBLIC', status: 'ACTIVE' },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      skip: offset,
-    });
+    try {
+      const rooms = await this.prisma.room.findMany({
+        where: { visibility: 'PUBLIC', status: 'ACTIVE' },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+      });
 
-    const enriched = await Promise.all(
-      rooms.map(async (room: any) => {
-        try {
-          const [owner, media, rawMemberships] = await Promise.all([
-            room.ownerId
-              ? this.prisma.user.findUnique({ where: { id: room.ownerId } })
-              : null,
-            this.prisma.media.findMany({
-              where: { roomId: room.id },
-              take: 5,
-            }),
-            this.prisma.roomMembership.findMany({
-              where: { roomId: room.id, status: 'ACTIVE' },
-            }),
-          ]);
+      if (!rooms || !Array.isArray(rooms)) return [];
 
-          const memberships = await Promise.all(
-            (rawMemberships || []).map(async (m: any) => {
-              const u = m.userId
-                ? await this.prisma.user.findUnique({ where: { id: m.userId } })
-                : null;
-              return {
-                ...m,
-                user: u
-                  ? {
-                      id: u.id,
-                      clerkUserId: u.clerkUserId,
-                      displayName: u.displayName,
-                      username: u.username,
-                      avatarUrl: u.avatarUrl,
-                      email: u.email,
-                      status: u.status,
-                    }
-                  : null,
-              };
-            })
-          );
+      const enriched = await Promise.all(
+        rooms.map(async (room: any) => {
+          try {
+            const [owner, media, rawMemberships] = await Promise.all([
+              room.ownerId
+                ? this.prisma.user.findUnique({ where: { id: room.ownerId } })
+                : null,
+              this.prisma.media.findMany({
+                where: { roomId: room.id },
+                take: 5,
+              }),
+              this.prisma.roomMembership.findMany({
+                where: { roomId: room.id, status: 'ACTIVE' },
+              }),
+            ]);
 
-          return {
-            ...room,
-            owner: owner || null,
-            media: media || [],
-            memberships: memberships || [],
-          };
-        } catch {
-          return {
-            ...room,
-            owner: null,
-            media: [],
-            memberships: [],
-          };
-        }
-      })
-    );
+            const memberships = await Promise.all(
+              (rawMemberships || []).map(async (m: any) => {
+                const u = m.userId
+                  ? await this.prisma.user.findUnique({ where: { id: m.userId } })
+                  : null;
+                return {
+                  ...m,
+                  user: u
+                    ? {
+                        id: u.id,
+                        clerkUserId: u.clerkUserId,
+                        displayName: u.displayName,
+                        username: u.username,
+                        avatarUrl: u.avatarUrl,
+                        email: u.email,
+                        status: u.status,
+                      }
+                    : null,
+                };
+              })
+            );
 
-    return enriched as unknown as RoomEntity[];
+            return {
+              ...room,
+              owner: owner || null,
+              media: media || [],
+              memberships: memberships || [],
+            };
+          } catch (enrichErr) {
+            console.warn('[listPublic] Room enrichment fallback:', enrichErr);
+            return {
+              ...room,
+              owner: null,
+              media: [],
+              memberships: [],
+            };
+          }
+        })
+      );
+
+      return enriched as unknown as RoomEntity[];
+    } catch (err) {
+      console.error('[PrismaRoomRepository.listPublic Error]:', err);
+      return [];
+    }
   }
 
   public async listUserRooms(userId: string): Promise<RoomEntity[]> {
