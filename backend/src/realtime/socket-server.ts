@@ -15,28 +15,34 @@ import type {
 export function createSocketServer(
   httpServer: HttpServer
 ): SocketIOServer<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData> {
-  const allowedOrigins = [
+  const explicitOrigins = [
     'https://watchparty-yt.vercel.app',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
     ...env.CORS_ORIGIN.split(',').map((s) => s.trim().replace(/\/$/, '')),
   ];
+
+  const isAllowedOrigin = (origin?: string): boolean => {
+    if (!origin) return true;
+    const cleanOrigin = origin.replace(/\/$/, '');
+    if (explicitOrigins.includes(cleanOrigin) || explicitOrigins.includes('*')) return true;
+    if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin)) return true;
+    if (/^https?:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(cleanOrigin)) return true;
+    if (/^https:\/\/([a-zA-Z0-9_-]+\.)?vercel\.app$/.test(cleanOrigin)) return true;
+    return false;
+  };
 
   const io = new SocketIOServer<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>(
     httpServer,
     {
       cors: {
         origin: (origin, callback) => {
-          const cleanOrigin = origin ? origin.replace(/\/$/, '') : '';
-          if (
-            !origin ||
-            allowedOrigins.includes(cleanOrigin) ||
-            allowedOrigins.includes('*') ||
-            (env.NODE_ENV === 'development' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin))
-          ) {
+          if (isAllowedOrigin(origin)) {
             callback(null, true);
           } else {
-            callback(new Error('Not allowed by CORS'));
+            callback(null, false);
           }
         },
         credentials: true,
