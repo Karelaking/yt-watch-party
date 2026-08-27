@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@clerk/backend": "^3.16.12",
+    "@js-temporal/polyfill": "^0.5.1",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^6.4.1",
     "@prisma/orm-postgres": "^8.0.0-rc.8",

@@ -1,3 +1,8 @@
+import { Temporal } from '@js-temporal/polyfill';
+if (!(globalThis as any).Temporal) {
+  (globalThis as any).Temporal = Temporal;
+}
+
 import { createServer } from 'node:http';
 import { createApp } from './app.js';
 import { env } from './config/env.config.js';

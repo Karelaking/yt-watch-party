@@ -1,3 +1,8 @@
+import { Temporal } from '@js-temporal/polyfill';
+if (!(globalThis as any).Temporal) {
+  (globalThis as any).Temporal = Temporal;
+}
+
 import { db } from '../../prisma/db.js';
 import { env } from '../../config/env.config.js';
 
