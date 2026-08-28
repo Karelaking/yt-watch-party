@@ -30,6 +30,7 @@ import { ArrowLeft, Loader2, Tv } from "lucide-react";
 interface FloatingParticle {
   id: string;
   emoji: string;
+  userName?: string;
   left: number;
 }
 
@@ -167,12 +168,28 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
     };
 
     // Handle live floating emoji reaction
-    const handleRoomReaction = (data: { userId: string; userName: string; emoji: string }) => {
+    const handleRoomReaction = (data: { userId: string; userName?: string; emoji: string }) => {
       reactionCountRef.current += 1;
       const currentCount = reactionCountRef.current;
+
+      const matchedMem = room?.memberships?.find(
+        (m) =>
+          m.userId === data.userId ||
+          (m.user as any)?.clerkUserId === data.userId ||
+          (m.user as any)?.id === data.userId
+      );
+
+      const resolvedNickname =
+        matchedMem?.nickname ||
+        data.userName ||
+        matchedMem?.user?.displayName ||
+        matchedMem?.user?.username ||
+        "Member";
+
       const newParticle: FloatingParticle = {
         id: `p-${currentCount}-${Date.now()}`,
         emoji: data.emoji,
+        userName: resolvedNickname,
         left: ((currentCount * 23) % 70) + 15,
       };
       setFloatingReactions((prev) => {
@@ -461,9 +478,17 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
   const handleTriggerReaction = (emoji: string) => {
     reactionCountRef.current += 1;
     const currentCount = reactionCountRef.current;
+    const resolvedNickname =
+      userMembership?.nickname ||
+      userMembership?.user?.displayName ||
+      user?.fullName ||
+      user?.username ||
+      "Member";
+
     const newParticle: FloatingParticle = {
-      id: `p-${currentCount}`,
+      id: `p-${currentCount}-${Date.now()}`,
       emoji,
+      userName: resolvedNickname,
       left: ((currentCount * 23) % 70) + 15,
     };
     setFloatingReactions((prev) => [...prev, newParticle]);
@@ -473,7 +498,11 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
     }, 3500);
 
     if (socket && isConnected) {
-      socket.emit("room:reaction", { roomId: room.id, emoji });
+      socket.emit("room:reaction", {
+        roomId: room.id,
+        emoji,
+        userName: resolvedNickname,
+      });
     }
   };
 

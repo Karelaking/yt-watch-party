@@ -11,6 +11,7 @@ import { PlayerControlsBar } from "./player-controls-bar";
 export interface FloatingParticle {
   id: string;
   emoji: string;
+  userName?: string;
   left: number;
 }
 
@@ -56,9 +57,12 @@ const FloatingReactionsOverlay = React.memo(function FloatingReactionsOverlay({
         <div
           key={p.id}
           style={{ left: `${p.left}%` }}
-          className="absolute bottom-6 text-3xl animate-reaction-1"
+          className="absolute bottom-8 flex flex-col items-center animate-reaction-1 drop-shadow-2xl"
         >
-          {p.emoji}
+          <span className="text-[11px] font-bold text-white bg-zinc-950/90 border border-zinc-700/90 backdrop-blur-md rounded-full px-2.5 py-0.5 shadow-xl truncate max-w-[140px] mb-1 tracking-tight">
+            {p.userName || "Member"}
+          </span>
+          <span className="text-3xl leading-none filter drop-shadow-md">{p.emoji}</span>
         </div>
       ))}
     </div>

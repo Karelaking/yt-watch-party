@@ -82,7 +82,7 @@ export interface ClientToServerEvents {
     },
     callback?: (response: { success: boolean; error?: string }) => void
   ) => void;
-  "room:reaction": (data: { roomId: string; emoji: string }) => void;
+  "room:reaction": (data: { roomId: string; emoji: string; userName?: string }) => void;
   "room:nickname": (
     data: { roomId: string; nickname: string },
     callback?: (response: { success: boolean; error?: string }) => void

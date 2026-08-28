@@ -428,17 +428,27 @@ export class WatchPartyGateway {
           const room = await this.resolveRoom(roomId);
           const canonicalRoomId = room ? room.id : roomId;
 
+          let membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.id);
+          if (!membership && user.clerkUserId) {
+            membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.clerkUserId);
+          }
+
+          const effectiveNickname =
+            membership?.nickname ||
+            (data as any).userName ||
+            user.displayName ||
+            (user.email ? user.email.split('@')[0] : 'Member');
+
           const reactionPayload = {
             userId: user.id,
-            userName: user.displayName || user.email || 'Watcher',
+            userName: effectiveNickname,
             emoji,
           };
 
           if (this.roomPubSubService) {
             this.roomPubSubService.publish(canonicalRoomId, 'ROOM_REACTION', reactionPayload, user.id).catch(() => {});
-          } else {
-            this.io.to(`room:${canonicalRoomId}`).emit('room:reaction', reactionPayload);
           }
+          this.io.to(`room:${canonicalRoomId}`).emit('room:reaction', reactionPayload);
         } catch (err) {
           console.warn('[Socket room:reaction warning]:', err);
         }

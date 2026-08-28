@@ -29,7 +29,7 @@ export interface ClientToServerEvents {
   'playback:action': (data: { roomId: string } & ClientSyncPayload, callback?: (response: { success: boolean; state?: PlaybackStateSnapshot & { media?: unknown }; error?: string }) => void) => void;
   'playback:heartbeat': (data: { roomId: string; clientPosition: number }) => void;
   'playlist:action': (data: { roomId: string; playlistId?: string; action: 'ADD' | 'REMOVE' | 'REORDER'; payload: unknown }, callback?: (response: { success: boolean; error?: string }) => void) => void;
-  'room:reaction': (data: { roomId: string; emoji: string }) => void;
+  'room:reaction': (data: { roomId: string; emoji: string; userName?: string }) => void;
   'room:nickname': (data: { roomId: string; nickname: string }, callback?: (response: { success: boolean; error?: string }) => void) => void;
   'room:settings_update': (data: { roomId: string; settings: unknown }, callback?: (response: { success: boolean; error?: string }) => void) => void;
   'chat:send': (data: { roomId: string; text: string }) => void;
