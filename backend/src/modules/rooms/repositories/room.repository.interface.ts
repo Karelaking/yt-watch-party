@@ -48,6 +48,7 @@ export interface UpdateRoomData {
   visibility?: RoomVisibility;
   maxMembers?: number;
   discoverable?: boolean;
+  ownerId?: string;
   status?: RoomStatus;
   endedAt?: Date | null;
   archivedAt?: Date | null;

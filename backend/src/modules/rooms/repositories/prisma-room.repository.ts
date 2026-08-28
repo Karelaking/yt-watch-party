@@ -271,6 +271,7 @@ export class PrismaRoomRepository implements IRoomRepository {
         visibility: data.visibility !== undefined ? data.visibility : undefined,
         maxMembers: data.maxMembers !== undefined ? data.maxMembers : undefined,
         discoverable: data.discoverable !== undefined ? data.discoverable : undefined,
+        ownerId: data.ownerId !== undefined ? data.ownerId : undefined,
         status: data.status !== undefined ? data.status : undefined,
         endedAt: data.endedAt !== undefined ? data.endedAt : undefined,
         archivedAt: data.archivedAt !== undefined ? data.archivedAt : undefined,

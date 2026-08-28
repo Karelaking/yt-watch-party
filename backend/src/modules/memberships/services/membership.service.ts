@@ -120,8 +120,47 @@ export class MembershipService implements IMembershipService {
     const room = await this.roomRepository.findById(roomId);
     if (!room) throw new NotFoundError('Room not found');
 
-    if (targetUserId === room.ownerId && newRole !== 'HOST') {
-      throw new BadRequestError('Cannot demote the room owner from HOST');
+    if (newRole === 'HOST') {
+      const membership = await this.membershipRepository.findByRoomAndUser(roomId, targetUserId);
+      if (!membership || membership.status !== 'ACTIVE') {
+        throw new NotFoundError('Target user is not an active member in this room');
+      }
+
+      // 1. Update room ownerId to new host
+      await this.roomRepository.update(roomId, { ownerId: membership.userId });
+
+      // 2. Demote previous owner to MODERATOR
+      if (room.ownerId && room.ownerId !== membership.userId) {
+        const prevOwnerMem = await this.membershipRepository.findByRoomAndUser(roomId, room.ownerId);
+        if (prevOwnerMem && prevOwnerMem.status === 'ACTIVE') {
+          await this.membershipRepository.updateRole(prevOwnerMem.id, 'MODERATOR', changedById, 'Host transferred');
+          this.eventDispatcher.publish(new RoleChangedEvent({
+            roomId,
+            userId: room.ownerId,
+            newRole: 'MODERATOR',
+            changedById,
+          }));
+        }
+      }
+
+      // 3. Promote new host to HOST
+      const updated = await this.membershipRepository.updateRole(membership.id, 'HOST', changedById, reason || 'Host transferred');
+      if (!updated) {
+        throw new NotFoundError('Failed to update member role');
+      }
+
+      this.eventDispatcher.publish(new RoleChangedEvent({
+        roomId,
+        userId: targetUserId,
+        newRole: 'HOST',
+        changedById,
+      }));
+
+      return updated;
+    }
+
+    if (targetUserId === room.ownerId) {
+      throw new BadRequestError('Cannot demote the room owner from HOST without transferring host role first');
     }
 
     const membership = await this.membershipRepository.findByRoomAndUser(roomId, targetUserId);

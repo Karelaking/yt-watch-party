@@ -31,6 +31,7 @@ export const updateRoomSchema = z.object({
   visibility: z.enum(['PUBLIC', 'PRIVATE', 'UNLISTED']).optional(),
   maxMembers: z.number().int().min(2).max(500).optional(),
   discoverable: z.boolean().optional(),
+  ownerId: z.string().optional(),
 });
 
 export const updateSettingsSchema = z.object({

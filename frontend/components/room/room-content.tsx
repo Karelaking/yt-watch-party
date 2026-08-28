@@ -273,15 +273,24 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
       const resolvedRole = (data.role || data.newRole) as RoomRole;
       setRoom((prev) => {
         if (!prev) return prev;
-        return {
-          ...prev,
-          memberships: prev.memberships.map((m) =>
+        const nextMembers = prev.memberships.map((m) => {
+          const isTarget =
             m.userId === data.userId ||
             (m.user as any)?.clerkUserId === data.userId ||
-            (m.user as any)?.id === data.userId
-              ? { ...m, role: resolvedRole }
-              : m
-          ),
+            (m.user as any)?.id === data.userId;
+          if (isTarget) {
+            return { ...m, role: resolvedRole };
+          }
+          if (resolvedRole === "HOST" && m.role === "HOST") {
+            return { ...m, role: "MODERATOR" as RoomRole };
+          }
+          return m;
+        });
+
+        return {
+          ...prev,
+          ownerId: resolvedRole === "HOST" ? data.userId : prev.ownerId,
+          memberships: nextMembers,
         };
       });
     };
@@ -837,8 +846,16 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
     setRoom((prev) => {
       if (!prev) return prev;
       const updatedMemberships = prev.memberships.map((m) => {
-        if (m.userId === newHostId || (m.user as any)?.clerkUserId === newHostId) return { ...m, role: "HOST" as RoomRole };
-        if (m.role === "HOST") return { ...m, role: "MODERATOR" as RoomRole };
+        if (
+          m.userId === newHostId ||
+          (m.user as any)?.clerkUserId === newHostId ||
+          (m.user as any)?.id === newHostId
+        ) {
+          return { ...m, role: "HOST" as RoomRole };
+        }
+        if (m.role === "HOST") {
+          return { ...m, role: "MODERATOR" as RoomRole };
+        }
         return m;
       });
 
@@ -848,6 +865,17 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
         memberships: updatedMemberships,
       };
     });
+
+    try {
+      const token = await getToken();
+      await apiClient.patch(
+        `/memberships/rooms/${room.id}/role`,
+        { targetUserId: newHostId, userId: newHostId, role: "HOST", newRole: "HOST" },
+        token
+      );
+    } catch (err) {
+      console.warn("Notice: host transfer sync:", err);
+    }
   };
 
   const handleKickMember = async (targetUserId: string) => {

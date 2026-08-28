@@ -138,6 +138,7 @@ export class WatchPartyGateway {
 
     this.eventDispatcher.subscribe(DomainEventType.ROLE_CHANGED, (event) => {
       const payload = event.payload as { roomId: string; userId: string; newRole: string; changedById: string };
+      this.roomCache.delete(payload.roomId);
       if (this.roomPubSubService) {
         this.roomPubSubService.publish(payload.roomId, 'ROOM_ROLE_CHANGED', payload, payload.changedById).catch(() => {});
       }
