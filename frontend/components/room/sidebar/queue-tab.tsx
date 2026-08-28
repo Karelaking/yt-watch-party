@@ -43,15 +43,16 @@ export function QueueTab({
         {canManagePlaylist && (
           <form onSubmit={handleAddQueue} className="flex items-center gap-1.5">
             <input
-              type="url"
-              placeholder="Paste YouTube, Twitch, Vimeo link..."
+              type="text"
+              placeholder="Paste YouTube link or Video ID..."
               value={newQueueUrl}
               onChange={(e) => setNewQueueUrl(e.target.value)}
-              className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-zinc-700 font-mono"
+              className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-zinc-700 font-mono text-zinc-200 placeholder:text-zinc-600"
             />
             <button
               type="submit"
-              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer"
+              disabled={!newQueueUrl.trim()}
+              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Plus className="w-3 h-3" />
               <span>Add</span>
@@ -73,7 +74,7 @@ export function QueueTab({
 
                 <div className="flex-1 truncate">
                   <span className="font-medium text-zinc-200 truncate block text-xs">
-                    {item.media.title || "Video"}
+                    {item.media?.title || "Video"}
                   </span>
                   <span className="text-[10px] text-zinc-500">
                     By {item.addedByName || "Guest"}
@@ -91,7 +92,7 @@ export function QueueTab({
                       <ChevronUp className="w-3 h-3" />
                     </button>
                   )}
-                  {idx < (playlist?.items.length || 0) - 1 && isHostOrMod && (
+                  {idx < (playlist?.items?.length || 0) - 1 && isHostOrMod && (
                     <button
                       onClick={() => onReorderPlaylistItem(item.id, "DOWN")}
                       className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white"
@@ -104,7 +105,7 @@ export function QueueTab({
 
                 {canControl && (
                   <button
-                    onClick={() => onPlayQueueItem(item.media.id)}
+                    onClick={() => onPlayQueueItem(item.media?.id || item.mediaId)}
                     className="p-1 rounded bg-zinc-800 hover:bg-zinc-700 text-white cursor-pointer"
                     title="Play now"
                   >

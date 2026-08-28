@@ -48,32 +48,45 @@ export class PlaylistService implements IPlaylistService {
   }
 
   public async listRoomPlaylists(roomId: string): Promise<PlaylistEntity[]> {
-    return this.playlistRepository.listByRoom(roomId);
+    const playlists = await this.playlistRepository.listByRoom(roomId);
+    if (!playlists || playlists.length === 0) {
+      const defaultPl = await this.playlistRepository.create({
+        roomId,
+        createdById: 'system',
+        name: 'Main Room Playlist',
+        description: 'Default watch party playlist',
+      });
+      return [{ ...defaultPl, items: [] }];
+    }
+    return playlists;
   }
 
   public async addItem(
     roomId: string,
     playlistId: string,
     userId: string,
-    data: AddPlaylistItemDto
+    data: AddPlaylistItemDto & { url?: string }
   ): Promise<PlaylistItemEntity> {
-    const playlist = await this.playlistRepository.findById(playlistId);
-    if (!playlist) throw new NotFoundError('Playlist not found');
+    let playlist = playlistId ? await this.playlistRepository.findById(playlistId) : null;
+    if (!playlist) {
+      playlist = await this.getOrCreateDefaultPlaylist(roomId, userId);
+    }
 
     let mediaId = data.mediaId;
-    if (!mediaId && data.url) {
-      const media = await this.mediaService.resolveAndSaveMedia(roomId, data.url, data.title);
+    const rawUrl = data.url || data.mediaUrl;
+    if (!mediaId && rawUrl) {
+      const media = await this.mediaService.resolveAndSaveMedia(roomId, rawUrl, data.title);
       mediaId = media.id;
     }
 
     if (!mediaId) {
-      throw new NotFoundError('Failed to resolve media item');
+      throw new NotFoundError('Failed to resolve media item from provided URL or ID');
     }
 
     const nextPosition = (playlist.items?.length ?? 0) + 1;
 
     return this.playlistRepository.addItem({
-      playlistId,
+      playlistId: playlist.id,
       mediaId,
       position: nextPosition,
       addedById: userId,

@@ -389,7 +389,12 @@ export function normalizeRoom(raw: any, rawSettings?: any): Room {
         }))
       : [],
     media: Array.isArray(entity.media) ? entity.media : [],
-    playlists: Array.isArray(entity.playlists) ? entity.playlists : [],
+    playlists: Array.isArray(entity.playlists)
+      ? entity.playlists.map((pl: any) => ({
+          ...pl,
+          items: Array.isArray(pl?.items) ? pl.items : [],
+        }))
+      : [],
     playbackState: entity.playbackState || {
       id: `pb-${entity.id}`,
       roomId: entity.id,

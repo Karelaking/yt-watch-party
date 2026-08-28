@@ -11,50 +11,92 @@ export class PrismaPlaylistRepository implements IPlaylistRepository {
   public async findById(id: string): Promise<PlaylistEntity | null> {
     const playlist = await this.prisma.playlist.findUnique({
       where: { id },
-      include: {
-        items: {
-          orderBy: { position: 'asc' },
-          include: {
-            media: true,
-          },
-        },
-      },
+    });
+    if (!playlist) return null;
+
+    const rawItems = await this.prisma.playlistItem.findMany({
+      where: { playlistId: id },
+      orderBy: { position: 'asc' },
     });
 
-    return (playlist as unknown as PlaylistEntity) || null;
+    const items = await Promise.all(
+      (rawItems || []).map(async (item: any) => {
+        const media = item.mediaId
+          ? await this.prisma.media.findUnique({ where: { id: item.mediaId } })
+          : null;
+        return {
+          ...item,
+          media,
+        };
+      })
+    );
+
+    return {
+      ...playlist,
+      items,
+    } as unknown as PlaylistEntity;
   }
 
   public async findRoomActivePlaylist(roomId: string): Promise<PlaylistEntity | null> {
     const playlist = await this.prisma.playlist.findFirst({
       where: { roomId, status: 'ACTIVE' },
-      include: {
-        items: {
-          orderBy: { position: 'asc' },
-          include: {
-            media: true,
-          },
-        },
-      },
+    });
+    if (!playlist) return null;
+
+    const rawItems = await this.prisma.playlistItem.findMany({
+      where: { playlistId: playlist.id },
+      orderBy: { position: 'asc' },
     });
 
-    return (playlist as unknown as PlaylistEntity) || null;
+    const items = await Promise.all(
+      (rawItems || []).map(async (item: any) => {
+        const media = item.mediaId
+          ? await this.prisma.media.findUnique({ where: { id: item.mediaId } })
+          : null;
+        return {
+          ...item,
+          media,
+        };
+      })
+    );
+
+    return {
+      ...playlist,
+      items,
+    } as unknown as PlaylistEntity;
   }
 
   public async listByRoom(roomId: string): Promise<PlaylistEntity[]> {
     const playlists = await this.prisma.playlist.findMany({
       where: { roomId },
-      include: {
-        items: {
-          orderBy: { position: 'asc' },
-          include: {
-            media: true,
-          },
-        },
-      },
       orderBy: { createdAt: 'asc' },
     });
 
-    return playlists as unknown as PlaylistEntity[];
+    return Promise.all(
+      (playlists || []).map(async (pl: any) => {
+        const rawItems = await this.prisma.playlistItem.findMany({
+          where: { playlistId: pl.id },
+          orderBy: { position: 'asc' },
+        });
+
+        const items = await Promise.all(
+          (rawItems || []).map(async (item: any) => {
+            const media = item.mediaId
+              ? await this.prisma.media.findUnique({ where: { id: item.mediaId } })
+              : null;
+            return {
+              ...item,
+              media,
+            };
+          })
+        );
+
+        return {
+          ...pl,
+          items,
+        };
+      })
+    ) as unknown as Promise<PlaylistEntity[]>;
   }
 
   public async create(data: {
@@ -72,7 +114,10 @@ export class PrismaPlaylistRepository implements IPlaylistRepository {
         status: 'ACTIVE',
       },
     });
-    return created as unknown as PlaylistEntity;
+    return {
+      ...created,
+      items: [],
+    } as unknown as PlaylistEntity;
   }
 
   public async addItem(data: {
@@ -89,7 +134,13 @@ export class PrismaPlaylistRepository implements IPlaylistRepository {
         addedById: data.addedById ?? null,
       },
     });
-    return item as unknown as PlaylistItemEntity;
+
+    const media = await this.prisma.media.findUnique({ where: { id: data.mediaId } });
+
+    return {
+      ...item,
+      media,
+    } as unknown as PlaylistItemEntity;
   }
 
   public async removeItem(itemId: string): Promise<boolean> {

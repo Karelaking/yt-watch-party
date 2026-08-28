@@ -7,10 +7,11 @@ export const createPlaylistSchema = z.object({
 
 export const addPlaylistItemSchema = z.object({
   url: z.string().optional(),
+  mediaUrl: z.string().optional(),
   mediaId: z.string().uuid().optional(),
   title: z.string().max(150).optional(),
-}).refine((data) => data.url || data.mediaId, {
-  message: 'Either url or mediaId must be provided',
+}).refine((data) => data.url || data.mediaUrl || data.mediaId, {
+  message: 'Either url, mediaUrl, or mediaId must be provided',
 });
 
 export const reorderPlaylistSchema = z.object({

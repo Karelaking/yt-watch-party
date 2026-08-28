@@ -22,16 +22,11 @@ export function extractYouTubeId(url: string): string | null {
     return cleanUrl;
   }
 
-  const watchMatch = cleanUrl.match(
-    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
+  const match = cleanUrl.match(
+    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|live|shorts|watch)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
   );
-  if (watchMatch && watchMatch[1]) {
-    return watchMatch[1];
-  }
-
-  const shortsMatch = cleanUrl.match(/youtube\.com\/shorts\/([^"&?\/\s]{11})/i);
-  if (shortsMatch && shortsMatch[1]) {
-    return shortsMatch[1];
+  if (match && match[1]) {
+    return match[1];
   }
 
   return null;

@@ -123,13 +123,31 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
     const handlePlaylistSync = (data: { playlistId: string; items: any[] }) => {
       setRoom((prev) => {
         if (!prev) return prev;
+        const exists = prev.playlists.some((pl) => pl.id === data.playlistId);
+        let updatedPlaylists;
+        if (exists) {
+          updatedPlaylists = prev.playlists.map((pl) =>
+            pl.id === data.playlistId ? { ...pl, items: data.items } : pl
+          );
+        } else {
+          updatedPlaylists = [
+            {
+              id: data.playlistId,
+              roomId: prev.id,
+              createdById: prev.ownerId,
+              name: "Main Room Playlist",
+              description: null,
+              status: "ACTIVE" as const,
+              items: data.items,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            ...prev.playlists,
+          ];
+        }
         return {
           ...prev,
-          playlists: prev.playlists.map((pl) =>
-            pl.id === data.playlistId || prev.playlists.length === 1
-              ? { ...pl, items: data.items }
-              : pl
-          ),
+          playlists: updatedPlaylists,
         };
       });
     };
@@ -565,7 +583,10 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
   // Add item to queue
   const handleAddPlaylistItem = async (mediaUrl: string) => {
     const parsed = parseMediaUrl(mediaUrl);
-    if (!parsed) return;
+    if (!parsed) {
+      alert("Invalid video link or video ID. Please check the URL and try again.");
+      return;
+    }
 
     const newMedia: Media = {
       id: `media-${Date.now()}`,
@@ -595,10 +616,29 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
         updatedAt: new Date().toISOString(),
       };
 
+      if (!playlist) {
+        return {
+          ...prev,
+          playlists: [
+            {
+              id: "pl-1",
+              roomId: prev.id,
+              createdById: currentUserId,
+              name: "Main Room Playlist",
+              description: null,
+              status: "ACTIVE",
+              items: [newItem],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          ],
+        };
+      }
+
       return {
         ...prev,
         playlists: prev.playlists.map((pl) =>
-          pl.id === (playlist?.id || "pl-1")
+          pl.id === playlist.id
             ? { ...pl, items: [...pl.items, newItem] }
             : pl
         ),
@@ -610,7 +650,11 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
         roomId: room.id,
         playlistId: room.playlists[0]?.id,
         action: "ADD",
-        payload: { url: mediaUrl, title: parsed.title },
+        payload: { url: mediaUrl, mediaUrl, title: parsed.title },
+      }, (res: any) => {
+        if (res && !res.success) {
+          console.warn("Notice: playlist socket add:", res.error);
+        }
       });
     } else {
       // Fallback: REST API when socket is not connected

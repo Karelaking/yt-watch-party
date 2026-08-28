@@ -74,7 +74,7 @@ export function RoomSidebar({
           }`}
         >
           <ListMusic className="w-3 h-3" />
-          <span>Queue ({currentPlaylist?.items.length || 0})</span>
+          <span>Queue ({currentPlaylist?.items?.length || 0})</span>
         </button>
 
         <button

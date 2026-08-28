@@ -337,11 +337,17 @@ export class WatchPartyGateway {
             return;
           }
 
-          const targetPlaylistId = playlistId || (await this.playlistService.getOrCreateDefaultPlaylist(canonicalRoomId, user.id)).id;
+          const defaultPl = await this.playlistService.getOrCreateDefaultPlaylist(canonicalRoomId, user.id);
+          const targetPlaylistId = playlistId || defaultPl.id;
 
           if (action === 'ADD') {
-            const addPayload = payload as { url: string; title?: string };
-            await this.playlistService.addItem(canonicalRoomId, targetPlaylistId, user.id, addPayload);
+            const addPayload = payload as { url?: string; mediaUrl?: string; mediaId?: string; title?: string };
+            const urlToAdd = addPayload.url || addPayload.mediaUrl || '';
+            await this.playlistService.addItem(canonicalRoomId, targetPlaylistId, user.id, {
+              url: urlToAdd,
+              mediaId: addPayload.mediaId,
+              title: addPayload.title,
+            });
           } else if (action === 'REMOVE') {
             const removePayload = payload as { itemId: string };
             await this.playlistService.removeItem(removePayload.itemId);
@@ -358,11 +364,10 @@ export class WatchPartyGateway {
 
           if (this.roomPubSubService) {
             await this.roomPubSubService.publish(canonicalRoomId, 'PLAYLIST_SYNC', playlistPayload, user.id);
-          } else {
-            this.io.to(`room:${canonicalRoomId}`).emit('playlist:sync', playlistPayload);
           }
+          this.io.to(`room:${canonicalRoomId}`).emit('playlist:sync', playlistPayload);
 
-          callback?.({ success: true });
+          callback?.({ success: true, playlist: updatedPlaylist } as any);
         } catch (err) {
           console.error('[Socket playlist:action] error:', err);
           callback?.({ success: false, error: err instanceof Error ? err.message : 'Playlist action failed' });
