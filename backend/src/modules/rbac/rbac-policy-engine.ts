@@ -36,7 +36,7 @@ export class RbacPolicyEngine implements IRbacPolicyEngine {
       allowScreenShare: true,
       syncPlayback: true,
       autoplayNext: true,
-      onlyHostCanControlPlayback: false,
+      onlyHostCanControlPlayback: true,
       allowModeratorPlaybackControl: true,
       allowPlaylistControl: true,
       onlyHostCanManagePlaylist: false,
@@ -68,13 +68,14 @@ export class RbacPolicyEngine implements IRbacPolicyEngine {
 
       case Permission.PLAYBACK_CONTROL:
       case Permission.PLAYBACK_CHANGE_MEDIA:
+        // Per spec: only HOST and MODERATOR may control playback.
+        // PARTICIPANT and VIEWER are always "watch only".
+        // The `onlyHostCanControlPlayback` setting governs whether
+        // Moderators are also allowed (false = Host+Mod, true = Host only).
         if (role === 'MODERATOR') {
-          return s.allowModeratorPlaybackControl;
+          return !s.onlyHostCanControlPlayback && s.allowModeratorPlaybackControl;
         }
-        if (role === 'PARTICIPANT') {
-          return !s.onlyHostCanControlPlayback;
-        }
-        return false; // VIEWER cannot control playback
+        return false; // PARTICIPANT and VIEWER cannot control playback
 
       case Permission.PLAYLIST_MANAGE:
         if (!s.allowPlaylistControl) return false;

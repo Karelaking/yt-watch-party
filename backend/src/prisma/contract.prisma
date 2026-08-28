@@ -356,7 +356,7 @@ model RoomSettings {
 
   autoplayNext Boolean @default(true)
 
-  onlyHostCanControlPlayback Boolean @default(false)
+  onlyHostCanControlPlayback Boolean @default(true)
 
   allowModeratorPlaybackControl Boolean @default(true)
 

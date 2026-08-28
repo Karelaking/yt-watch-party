@@ -115,12 +115,12 @@ export function YouTubeSyncPlayer({
   const canControl = (() => {
     // HOST always has absolute control (mirrors backend RBAC)
     if (isHost) return true;
-    // Open DJ mode: everyone can control
-    if (!settings.onlyHostCanControlPlayback) return true;
-    // Host-only mode: moderator needs explicit permission, others denied
+    // Moderators can control when the room setting permits
     if (isHostOrMod) {
-      return settings.allowModeratorPlaybackControl !== false;
+      return !settings.onlyHostCanControlPlayback &&
+        settings.allowModeratorPlaybackControl !== false;
     }
+    // PARTICIPANT and VIEWER are always "watch only" per spec
     return false;
   })();
 
@@ -428,6 +428,7 @@ export function YouTubeSyncPlayer({
         setPlaybackRate(playbackState.playbackRate);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     playbackState.isPlaying,
     playbackState.position,

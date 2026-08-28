@@ -37,25 +37,34 @@ describe('RbacPolicyEngine', () => {
       expect(engine.can('MODERATOR', null, Permission.MEMBER_ROLE_CHANGE)).toBe(false);
     });
 
-    it('should respect allowModeratorPlaybackControl when onlyHostCanControlPlayback is true', () => {
+    it('should allow playback control when onlyHostCanControlPlayback is false and allowModeratorPlaybackControl is true', () => {
       const settingsAllowed = {
-        onlyHostCanControlPlayback: true,
+        onlyHostCanControlPlayback: false,
         allowModeratorPlaybackControl: true,
       };
       expect(engine.can('MODERATOR', settingsAllowed, Permission.PLAYBACK_CONTROL)).toBe(true);
 
-      const settingsDisallowed = {
+      // When onlyHostCanControlPlayback is true, even Moderators are denied
+      const settingsHostOnly = {
         onlyHostCanControlPlayback: true,
+        allowModeratorPlaybackControl: true,
+      };
+      expect(engine.can('MODERATOR', settingsHostOnly, Permission.PLAYBACK_CONTROL)).toBe(false);
+
+      // When allowModeratorPlaybackControl is false, Moderators are denied
+      const settingsModDisabled = {
+        onlyHostCanControlPlayback: false,
         allowModeratorPlaybackControl: false,
       };
-      expect(engine.can('MODERATOR', settingsDisallowed, Permission.PLAYBACK_CONTROL)).toBe(false);
+      expect(engine.can('MODERATOR', settingsModDisabled, Permission.PLAYBACK_CONTROL)).toBe(false);
     });
   });
 
   describe('PARTICIPANT permissions', () => {
-    it('should allow playback control by default, unless onlyHostCanControlPlayback is enabled', () => {
-      expect(engine.can('PARTICIPANT', { onlyHostCanControlPlayback: false }, Permission.PLAYBACK_CONTROL)).toBe(true);
+    it('should NEVER allow playback control regardless of settings (watch-only per spec)', () => {
+      expect(engine.can('PARTICIPANT', { onlyHostCanControlPlayback: false }, Permission.PLAYBACK_CONTROL)).toBe(false);
       expect(engine.can('PARTICIPANT', { onlyHostCanControlPlayback: true }, Permission.PLAYBACK_CONTROL)).toBe(false);
+      expect(engine.can('PARTICIPANT', null, Permission.PLAYBACK_CONTROL)).toBe(false);
     });
 
     it('should allow playlist management by default, unless onlyHostCanManagePlaylist is enabled', () => {
