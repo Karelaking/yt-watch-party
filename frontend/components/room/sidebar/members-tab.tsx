@@ -121,12 +121,13 @@ export function MembersTab({
                 {isHost && m.role !== "HOST" && (
                   <div className="flex items-center gap-1">
                     <button
-                      onClick={() =>
+                      onClick={() => {
+                        const targetId = m.userId || (m.user as any)?.id || (m.user as any)?.clerkUserId;
                         onUpdateMemberRole(
-                          m.userId,
+                          targetId,
                           m.role === "MODERATOR" ? "PARTICIPANT" : "MODERATOR"
-                        )
-                      }
+                        );
+                      }}
                       className="text-[10px] text-zinc-400 hover:text-white px-1 py-0.5 rounded hover:bg-zinc-800 cursor-pointer"
                       title="Toggle Moderator Role"
                     >
@@ -134,7 +135,10 @@ export function MembersTab({
                     </button>
 
                     <button
-                      onClick={() => onTransferHost(m.userId)}
+                      onClick={() => {
+                        const targetId = m.userId || (m.user as any)?.id || (m.user as any)?.clerkUserId;
+                        onTransferHost(targetId);
+                      }}
                       className="text-[10px] text-amber-400 hover:text-amber-300 px-1 py-0.5 rounded hover:bg-zinc-800 cursor-pointer"
                       title="Transfer Room Ownership"
                     >
@@ -142,7 +146,10 @@ export function MembersTab({
                     </button>
 
                     <button
-                      onClick={() => onKickMember(m.userId)}
+                      onClick={() => {
+                        const targetId = m.userId || (m.user as any)?.id || (m.user as any)?.clerkUserId;
+                        onKickMember(targetId);
+                      }}
                       className="p-1 text-zinc-400 hover:text-red-400 cursor-pointer"
                       title="Kick Member"
                     >
@@ -150,12 +157,13 @@ export function MembersTab({
                     </button>
 
                     <button
-                      onClick={() =>
+                      onClick={() => {
+                        const targetId = m.userId || (m.user as any)?.id || (m.user as any)?.clerkUserId;
                         setBanModalUser({
-                          id: m.userId,
+                          id: targetId,
                           name: m.nickname || m.user.displayName || "User",
-                        })
-                      }
+                        });
+                      }}
                       className="p-1 text-zinc-400 hover:text-red-500 cursor-pointer"
                       title="Ban Member"
                     >

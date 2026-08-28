@@ -13,8 +13,8 @@ export interface ServerToClientEvents {
   }) => void;
   'playlist:sync': (data: { playlistId: string; items: unknown[] }) => void;
   'room:member_joined': (data: { userId: string; role: string; displayName?: string | null }) => void;
-  'room:member_left': (data: { userId: string }) => void;
-  'room:role_changed': (data: { userId: string; newRole: string }) => void;
+  'room:member_left': (data: { userId: string; reason?: string }) => void;
+  'room:role_changed': (data: { userId: string; newRole: string; role?: string }) => void;
   'room:reaction': (data: { userId: string; userName: string; emoji: string }) => void;
   'room:settings_updated': (data: { roomId: string; settings: unknown }) => void;
   'chat:message': (data: { id: string; senderId: string; senderName: string; text: string; sentAt: string }) => void;

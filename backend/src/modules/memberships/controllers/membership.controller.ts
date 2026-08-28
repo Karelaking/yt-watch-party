@@ -32,15 +32,18 @@ export class MembershipController extends BaseController {
   public changeRole = this.catchAsync(async (req: Request, res: Response) => {
     if (!req.user) throw new UnauthorizedError();
     const roomId = req.params['roomId'] as string;
-    const { targetUserId, role, reason } = req.body as ChangeRoleDto;
-    const updated = await this.membershipService.changeRole(roomId, targetUserId, role, req.user.id, reason);
+    const body = req.body as any;
+    const targetUserId = body.targetUserId || body.userId;
+    const role = body.role || body.newRole;
+    const updated = await this.membershipService.changeRole(roomId, targetUserId, role, req.user.id, body.reason);
     return this.ok(res, updated, 'Member role updated successfully');
   });
 
   public kickMember = this.catchAsync(async (req: Request, res: Response) => {
     if (!req.user) throw new UnauthorizedError();
     const roomId = req.params['roomId'] as string;
-    const { targetUserId } = req.body as KickMemberDto;
+    const body = req.body as any;
+    const targetUserId = body.targetUserId || body.userId;
     await this.membershipService.kickMember(roomId, targetUserId, req.user.id);
     return this.ok(res, { kicked: true }, 'Member removed from room');
   });
@@ -48,8 +51,9 @@ export class MembershipController extends BaseController {
   public banMember = this.catchAsync(async (req: Request, res: Response) => {
     if (!req.user) throw new UnauthorizedError();
     const roomId = req.params['roomId'] as string;
-    const { targetUserId, reason, expiresAt } = req.body as BanMemberDto;
-    const ban = await this.membershipService.banMember(roomId, targetUserId, req.user.id, reason, expiresAt);
+    const body = req.body as any;
+    const targetUserId = body.targetUserId || body.userId;
+    const ban = await this.membershipService.banMember(roomId, targetUserId, req.user.id, body.reason, body.expiresAt);
     return this.ok(res, ban, 'Member banned from room');
   });
 

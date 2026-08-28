@@ -9,7 +9,7 @@ import type { IMembershipRepository, IBanRepository } from '../../memberships/re
 import type { IMessageRepository } from '../../chat/repositories/message.repository.interface.js';
 import type { Redis } from 'ioredis';
 import { RedisKeys } from '../../../infrastructure/redis/redis-keys.js';
-import { RoomEndedEvent, MemberJoinedEvent } from '../../../core/events/index.js';
+import { RoomEndedEvent, MemberJoinedEvent, SettingsUpdatedEvent } from '../../../core/events/index.js';
 import type { RoomRole } from '../../rbac/permissions.js';
 
 export interface IRoomService extends IService {
@@ -208,6 +208,12 @@ export class RoomService implements IRoomService {
   public async updateSettings(roomId: string, settings: UpdateSettingsDto): Promise<RoomSettingsEntity> {
     const updated = await this.settingsRepository.update(roomId, settings);
     if (!updated) throw new NotFoundError('Room settings not found');
+
+    this.eventDispatcher.publish(new SettingsUpdatedEvent({
+      roomId,
+      settings: updated,
+    }));
+
     return updated;
   }
 

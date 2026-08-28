@@ -259,18 +259,28 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
         if (!prev) return prev;
         return {
           ...prev,
-          memberships: prev.memberships.filter((m) => m.userId !== data.userId),
+          memberships: prev.memberships.filter(
+            (m) =>
+              m.userId !== data.userId &&
+              (m.user as any)?.clerkUserId !== data.userId &&
+              (m.user as any)?.id !== data.userId
+          ),
         };
       });
     };
 
-    const handleRoleChanged = (data: { userId: string; newRole: string }) => {
+    const handleRoleChanged = (data: { userId: string; newRole?: string; role?: string }) => {
+      const resolvedRole = (data.role || data.newRole) as RoomRole;
       setRoom((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
           memberships: prev.memberships.map((m) =>
-            m.userId === data.userId ? { ...m, role: data.newRole as RoomRole } : m
+            m.userId === data.userId ||
+            (m.user as any)?.clerkUserId === data.userId ||
+            (m.user as any)?.id === data.userId
+              ? { ...m, role: resolvedRole }
+              : m
           ),
         };
       });
@@ -802,7 +812,11 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
       return {
         ...prev,
         memberships: prev.memberships.map((m) =>
-          m.userId === targetUserId ? { ...m, role } : m
+          m.userId === targetUserId ||
+          (m.user as any)?.clerkUserId === targetUserId ||
+          (m.user as any)?.id === targetUserId
+            ? { ...m, role }
+            : m
         ),
       };
     });
@@ -811,7 +825,7 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
       const token = await getToken();
       await apiClient.patch(
         `/memberships/rooms/${room.id}/role`,
-        { userId: targetUserId, newRole: role },
+        { targetUserId, userId: targetUserId, role, newRole: role },
         token
       );
     } catch (err) {
@@ -823,7 +837,7 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
     setRoom((prev) => {
       if (!prev) return prev;
       const updatedMemberships = prev.memberships.map((m) => {
-        if (m.userId === newHostId) return { ...m, role: "HOST" as RoomRole };
+        if (m.userId === newHostId || (m.user as any)?.clerkUserId === newHostId) return { ...m, role: "HOST" as RoomRole };
         if (m.role === "HOST") return { ...m, role: "MODERATOR" as RoomRole };
         return m;
       });
@@ -841,7 +855,12 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
       if (!prev) return prev;
       return {
         ...prev,
-        memberships: prev.memberships.filter((m) => m.userId !== targetUserId),
+        memberships: prev.memberships.filter(
+          (m) =>
+            m.userId !== targetUserId &&
+            (m.user as any)?.clerkUserId !== targetUserId &&
+            (m.user as any)?.id !== targetUserId
+        ),
       };
     });
 
@@ -849,7 +868,7 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
       const token = await getToken();
       await apiClient.post(
         `/memberships/rooms/${room.id}/kick`,
-        { userId: targetUserId },
+        { targetUserId, userId: targetUserId },
         token
       );
     } catch (err) {
@@ -867,7 +886,12 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
       if (!prev) return prev;
       return {
         ...prev,
-        memberships: prev.memberships.filter((m) => m.userId !== targetUserId),
+        memberships: prev.memberships.filter(
+          (m) =>
+            m.userId !== targetUserId &&
+            (m.user as any)?.clerkUserId !== targetUserId &&
+            (m.user as any)?.id !== targetUserId
+        ),
       };
     });
 
@@ -875,7 +899,7 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
       const token = await getToken();
       await apiClient.post(
         `/memberships/rooms/${room.id}/ban`,
-        { userId: targetUserId, reason, type },
+        { targetUserId, userId: targetUserId, reason, type },
         token
       );
     } catch (err) {

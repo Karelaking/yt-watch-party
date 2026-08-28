@@ -26,6 +26,7 @@ export enum DomainEventType {
 
   SCREEN_SHARE_STARTED = 'SCREEN_SHARE_STARTED',
   SCREEN_SHARE_ENDED = 'SCREEN_SHARE_ENDED',
+  SETTINGS_UPDATED = 'SETTINGS_UPDATED',
 }
 
 export class BaseDomainEvent<T = unknown> implements IDomainEvent<T> {
@@ -54,9 +55,39 @@ export class RoomEndedEvent extends BaseDomainEvent<{ roomId: string }> {
   }
 }
 
-export class MemberJoinedEvent extends BaseDomainEvent<{ roomId: string; userId: string; role: string }> {
-  constructor(payload: { roomId: string; userId: string; role: string }) {
+export class MemberJoinedEvent extends BaseDomainEvent<{ roomId: string; userId: string; role: string; displayName?: string | null }> {
+  constructor(payload: { roomId: string; userId: string; role: string; displayName?: string | null }) {
     super(DomainEventType.MEMBER_JOINED, payload);
+  }
+}
+
+export class RoleChangedEvent extends BaseDomainEvent<{ roomId: string; userId: string; newRole: string; changedById: string }> {
+  constructor(payload: { roomId: string; userId: string; newRole: string; changedById: string }) {
+    super(DomainEventType.ROLE_CHANGED, payload);
+  }
+}
+
+export class MemberLeftEvent extends BaseDomainEvent<{ roomId: string; userId: string }> {
+  constructor(payload: { roomId: string; userId: string }) {
+    super(DomainEventType.MEMBER_LEFT, payload);
+  }
+}
+
+export class MemberRemovedEvent extends BaseDomainEvent<{ roomId: string; userId: string; actorId: string }> {
+  constructor(payload: { roomId: string; userId: string; actorId: string }) {
+    super(DomainEventType.MEMBER_REMOVED, payload);
+  }
+}
+
+export class MemberBannedEvent extends BaseDomainEvent<{ roomId: string; userId: string; actorId: string; reason?: string }> {
+  constructor(payload: { roomId: string; userId: string; actorId: string; reason?: string }) {
+    super(DomainEventType.MEMBER_BANNED, payload);
+  }
+}
+
+export class SettingsUpdatedEvent extends BaseDomainEvent<{ roomId: string; settings: any }> {
+  constructor(payload: { roomId: string; settings: any }) {
+    super(DomainEventType.SETTINGS_UPDATED, payload);
   }
 }
 

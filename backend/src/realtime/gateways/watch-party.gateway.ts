@@ -136,6 +136,41 @@ export class WatchPartyGateway {
       }
     });
 
+    this.eventDispatcher.subscribe(DomainEventType.ROLE_CHANGED, (event) => {
+      const payload = event.payload as { roomId: string; userId: string; newRole: string; changedById: string };
+      if (this.roomPubSubService) {
+        this.roomPubSubService.publish(payload.roomId, 'ROOM_ROLE_CHANGED', payload, payload.changedById).catch(() => {});
+      }
+      this.io.to(`room:${payload.roomId}`).emit('room:role_changed', {
+        userId: payload.userId,
+        newRole: payload.newRole,
+        role: payload.newRole,
+      });
+    });
+
+    this.eventDispatcher.subscribe(DomainEventType.MEMBER_LEFT, (event) => {
+      const payload = event.payload as { roomId: string; userId: string };
+      this.io.to(`room:${payload.roomId}`).emit('room:member_left', { userId: payload.userId });
+    });
+
+    this.eventDispatcher.subscribe(DomainEventType.MEMBER_REMOVED, (event) => {
+      const payload = event.payload as { roomId: string; userId: string; actorId: string };
+      this.io.to(`room:${payload.roomId}`).emit('room:member_left', { userId: payload.userId, reason: 'KICKED' });
+    });
+
+    this.eventDispatcher.subscribe(DomainEventType.MEMBER_BANNED, (event) => {
+      const payload = event.payload as { roomId: string; userId: string; actorId: string; reason?: string };
+      this.banCache.delete(payload.roomId);
+      this.io.to(`room:${payload.roomId}`).emit('room:member_left', { userId: payload.userId, reason: 'BANNED' });
+    });
+
+    this.eventDispatcher.subscribe(DomainEventType.SETTINGS_UPDATED, (event) => {
+      const payload = event.payload as { roomId: string; settings: any };
+      this.settingsCache.delete(payload.roomId);
+      this.roomCache.delete(payload.roomId);
+      this.io.to(`room:${payload.roomId}`).emit('room:settings_updated', payload);
+    });
+
     this.eventDispatcher.subscribe(DomainEventType.ROOM_ENDED, (event) => {
       const payload = event.payload as { roomId: string };
       this.roomCache.delete(payload.roomId);

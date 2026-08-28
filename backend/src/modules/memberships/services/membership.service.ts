@@ -7,7 +7,13 @@ import type {
 import type { IRoomRepository, IRoomSettingsRepository } from '../../rooms/repositories/room.repository.interface.js';
 import type { RoomRole } from '../../rbac/permissions.js';
 import type { IEventDispatcher } from '../../../core/events/index.js';
-import { MemberJoinedEvent } from '../../../core/events/index.js';
+import {
+  MemberJoinedEvent,
+  RoleChangedEvent,
+  MemberLeftEvent,
+  MemberRemovedEvent,
+  MemberBannedEvent,
+} from '../../../core/events/index.js';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../../../core/errors/index.js';
 import type { IService } from '../../../core/interfaces/index.js';
 
@@ -96,6 +102,7 @@ export class MembershipService implements IMembershipService {
     const membership = await this.membershipRepository.findByRoomAndUser(roomId, userId);
     if (membership && membership.status === 'ACTIVE') {
       await this.membershipRepository.updateStatus(membership.id, 'LEFT');
+      this.eventDispatcher.publish(new MemberLeftEvent({ roomId, userId }));
     }
   }
 
@@ -126,10 +133,18 @@ export class MembershipService implements IMembershipService {
     if (!updated) {
       throw new NotFoundError('Failed to update member role');
     }
+
+    this.eventDispatcher.publish(new RoleChangedEvent({
+      roomId,
+      userId: targetUserId,
+      newRole,
+      changedById,
+    }));
+
     return updated;
   }
 
-  public async kickMember(roomId: string, targetUserId: string, _actorId: string): Promise<void> {
+  public async kickMember(roomId: string, targetUserId: string, actorId: string): Promise<void> {
     const room = await this.roomRepository.findById(roomId);
     if (!room) throw new NotFoundError('Room not found');
 
@@ -143,6 +158,11 @@ export class MembershipService implements IMembershipService {
     }
 
     await this.membershipRepository.updateStatus(membership.id, 'REMOVED');
+    this.eventDispatcher.publish(new MemberRemovedEvent({
+      roomId,
+      userId: targetUserId,
+      actorId,
+    }));
   }
 
   public async banMember(
@@ -164,6 +184,13 @@ export class MembershipService implements IMembershipService {
     if (membership) {
       await this.membershipRepository.updateStatus(membership.id, 'BANNED');
     }
+
+    this.eventDispatcher.publish(new MemberBannedEvent({
+      roomId,
+      userId: targetUserId,
+      actorId,
+      reason,
+    }));
 
     return this.banRepository.createBan({
       roomId,
