@@ -38,10 +38,18 @@ export class PrismaPlaybackRepository implements IPlaybackRepository {
 
 
   public async saveState(state: PlaybackStateSnapshot): Promise<PlaybackStateEntity> {
+    let validMediaId: string | null = null;
+    if (state.mediaId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(state.mediaId)) {
+      const exists = await this.prisma.media.findUnique({ where: { id: state.mediaId } }).catch(() => null);
+      if (exists) {
+        validMediaId = state.mediaId;
+      }
+    }
+
     const updated = await this.prisma.playbackState.upsert({
       where: { roomId: state.roomId },
       update: {
-        mediaId: state.mediaId ?? null,
+        mediaId: validMediaId,
         position: state.position,
         isPlaying: state.isPlaying,
         playbackRate: state.playbackRate,
@@ -52,7 +60,7 @@ export class PrismaPlaybackRepository implements IPlaybackRepository {
       },
       create: {
         roomId: state.roomId,
-        mediaId: state.mediaId ?? null,
+        mediaId: validMediaId,
         position: state.position,
         isPlaying: state.isPlaying,
         playbackRate: state.playbackRate,
@@ -64,7 +72,7 @@ export class PrismaPlaybackRepository implements IPlaybackRepository {
     });
 
     const media = updated.mediaId
-      ? await this.prisma.media.findUnique({ where: { id: updated.mediaId } })
+      ? await this.prisma.media.findUnique({ where: { id: updated.mediaId } }).catch(() => null)
       : null;
 
     return {
@@ -93,12 +101,20 @@ export class PrismaPlaybackRepository implements IPlaybackRepository {
     version?: number | null;
     metadata?: Record<string, unknown> | null;
   }): Promise<void> {
+    let validMediaId: string | null = null;
+    if (data.mediaId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.mediaId)) {
+      const exists = await this.prisma.media.findUnique({ where: { id: data.mediaId } }).catch(() => null);
+      if (exists) {
+        validMediaId = data.mediaId;
+      }
+    }
+
     await this.prisma.playbackHistory.create({
       data: {
         roomId: data.roomId,
         actorId: data.actorId,
         action: data.action,
-        mediaId: data.mediaId ?? null,
+        mediaId: validMediaId,
         position: data.position ?? null,
         playbackRate: data.playbackRate ?? null,
         version: data.version !== undefined && data.version !== null ? BigInt(data.version) : null,

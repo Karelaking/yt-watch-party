@@ -465,6 +465,16 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
       };
     });
 
+    const isUuid = (val?: string | null) =>
+      Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val));
+
+    const mediaIdToSend =
+      isUuid(room.playbackState.mediaId)
+        ? room.playbackState.mediaId
+        : isUuid(activeMedia?.id)
+        ? activeMedia!.id
+        : null;
+
     if (socket && isConnected) {
       socket.emit(
         "playback:action",
@@ -473,7 +483,7 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
           action: resolvedAction,
           position,
           playbackRate,
-          mediaId: room.playbackState.mediaId || activeMedia?.id || null,
+          mediaId: mediaIdToSend,
         },
         (res) => {
           if (res && !res.success) {
