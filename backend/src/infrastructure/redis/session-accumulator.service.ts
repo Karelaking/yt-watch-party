@@ -1,6 +1,6 @@
 import type { Redis } from 'ioredis';
 import type { PrismaClient } from '../database/prisma.js';
-import { RedisKeys } from './redis-keys.js';
+import { RedisKeys, RedisTTL } from './redis-keys.js';
 import type { IService } from '../../core/interfaces/index.js';
 
 export interface ISessionAccumulatorService extends IService {
@@ -27,7 +27,18 @@ export class SessionAccumulatorService implements ISessionAccumulatorService {
   public async recordHeartbeat(sessionId: string, seconds: number = 15): Promise<void> {
     if (!sessionId) return;
     try {
-      await this.redis.hincrby(RedisKeys.sessionsPendingWatchTime(), sessionId, seconds);
+      const key = RedisKeys.sessionsPendingWatchTime();
+      if (typeof this.redis.pipeline === 'function') {
+        const pipeline = this.redis.pipeline();
+        pipeline.hincrby(key, sessionId, seconds);
+        pipeline.expire(key, RedisTTL.PENDING_WATCH_TIME);
+        await pipeline.exec();
+      } else {
+        await this.redis.hincrby(key, sessionId, seconds);
+        if (typeof this.redis.expire === 'function') {
+          await this.redis.expire(key, RedisTTL.PENDING_WATCH_TIME);
+        }
+      }
     } catch (err) {
       console.warn('[SessionAccumulator] Redis hincrby failed:', err instanceof Error ? err.message : err);
     }
@@ -49,7 +60,11 @@ export class SessionAccumulatorService implements ISessionAccumulatorService {
       let exists = false;
       try {
         const renamed = await this.redis.rename(key, processingKey);
-        if (renamed === 'OK') exists = true;
+        if (renamed === 'OK') {
+          exists = true;
+          // Set 10m safety expiry on processingKey so abandoned batches don't leak memory
+          await this.redis.expire(processingKey, RedisTTL.PROCESSING_BATCH);
+        }
       } catch {
         // Key might not exist (no pending heartbeats)
         exists = false;

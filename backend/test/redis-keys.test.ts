@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { RedisKeys } from '../src/infrastructure/redis/redis-keys.js';
+import { RedisKeys, RedisTTL } from '../src/infrastructure/redis/redis-keys.js';
 
 describe('RedisKeys Taxonomy', () => {
   it('should generate properly formatted room keys', () => {
@@ -31,5 +31,19 @@ describe('RedisKeys Taxonomy', () => {
     expect(RedisKeys.roomSettings('room-123')).toBe('watchparty:room:room-123:settings');
     expect(RedisKeys.roomBans('room-123')).toBe('watchparty:room:room-123:bans');
     expect(RedisKeys.sessionsPendingWatchTime()).toBe('watchparty:sessions:pending_watch_time');
+  });
+
+  it('should export standard RedisTTL policies', () => {
+    expect(RedisTTL.SOCKET_USER).toBe(86400);
+    expect(RedisTTL.SOCKET_ROOM).toBe(86400);
+    expect(RedisTTL.ROOM_PRESENCE).toBe(86400);
+    expect(RedisTTL.ROOM_CONNECTIONS).toBe(86400);
+    expect(RedisTTL.ROOM_VIEWERS).toBe(86400);
+    expect(RedisTTL.USER_PRESENCE_ONLINE).toBe(86400);
+    expect(RedisTTL.USER_PRESENCE_OFFLINE).toBe(3600);
+    expect(RedisTTL.TYPING_INDICATOR).toBe(5);
+    expect(RedisTTL.PENDING_WATCH_TIME).toBe(86400);
+    expect(RedisTTL.PROCESSING_BATCH).toBe(600);
+    expect(RedisTTL.LOCK_PLAYBACK_MS).toBe(3000);
   });
 });

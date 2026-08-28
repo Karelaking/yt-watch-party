@@ -16,6 +16,28 @@ describe('SessionAccumulatorService', () => {
         memoryHash.set(field, String(next));
         return next;
       }),
+      expire: vi.fn(async (_key: string, _ttl: number) => 1),
+      pipeline: vi.fn(() => {
+        const operations: Array<() => Promise<any>> = [];
+        const pipe = {
+          hincrby: vi.fn((key: string, field: string, increment: number) => {
+            operations.push(async () => redisMock.hincrby(key, field, increment));
+            return pipe;
+          }),
+          expire: vi.fn((key: string, ttl: number) => {
+            operations.push(async () => redisMock.expire(key, ttl));
+            return pipe;
+          }),
+          exec: vi.fn(async () => {
+            const results: any[] = [];
+            for (const op of operations) {
+              results.push([null, await op()]);
+            }
+            return results;
+          }),
+        };
+        return pipe;
+      }),
       rename: vi.fn(async (key: string, newKey: string) => {
         if (memoryHash.size === 0) throw new Error('ERR no such key');
         return 'OK';

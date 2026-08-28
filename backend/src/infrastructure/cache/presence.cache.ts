@@ -1,5 +1,5 @@
 import type { Redis } from 'ioredis';
-import { RedisKeys } from '../redis/redis-keys.js';
+import { RedisKeys, RedisTTL } from '../redis/redis-keys.js';
 
 export interface UserPresenceData {
   userId: string;
@@ -27,27 +27,33 @@ export class RedisPresenceCache implements IPresenceCache {
   public async addSocketToRoom(socketId: string, userId: string, roomId: string): Promise<void> {
     const pipeline = this.redis.pipeline();
 
-    // Map socketId -> userId & socketId -> roomId
-    pipeline.set(RedisKeys.socketUser(socketId), userId, 'EX', 86400);
-    pipeline.set(RedisKeys.socketRoom(socketId), roomId, 'EX', 86400);
+    // Map socketId -> userId & socketId -> roomId with TTL
+    pipeline.set(RedisKeys.socketUser(socketId), userId, 'EX', RedisTTL.SOCKET_USER);
+    pipeline.set(RedisKeys.socketRoom(socketId), roomId, 'EX', RedisTTL.SOCKET_ROOM);
 
-    // Add socketId to room connections set
-    pipeline.sadd(RedisKeys.roomConnections(roomId), socketId);
+    // Add socketId to room connections set with TTL
+    const connKey = RedisKeys.roomConnections(roomId);
+    pipeline.sadd(connKey, socketId);
+    pipeline.expire(connKey, RedisTTL.ROOM_CONNECTIONS);
 
-    // Add userId to room presence set
-    pipeline.sadd(RedisKeys.roomPresence(roomId), userId);
+    // Add userId to room presence set with TTL
+    const presKey = RedisKeys.roomPresence(roomId);
+    pipeline.sadd(presKey, userId);
+    pipeline.expire(presKey, RedisTTL.ROOM_PRESENCE);
 
-    // Increment viewers counter
-    pipeline.zadd(RedisKeys.roomViewers(roomId), Date.now(), userId);
+    // Increment viewers counter with TTL
+    const viewersKey = RedisKeys.roomViewers(roomId);
+    pipeline.zadd(viewersKey, Date.now(), userId);
+    pipeline.expire(viewersKey, RedisTTL.ROOM_VIEWERS);
 
-    // Update global user presence
+    // Update global user presence with TTL
     const userPresence: UserPresenceData = {
       userId,
       status: 'ONLINE',
       currentRoomId: roomId,
       lastActiveAt: new Date().toISOString(),
     };
-    pipeline.set(RedisKeys.userPresence(userId), JSON.stringify(userPresence), 'EX', 86400);
+    pipeline.set(RedisKeys.userPresence(userId), JSON.stringify(userPresence), 'EX', RedisTTL.USER_PRESENCE_ONLINE);
 
     await pipeline.exec();
   }
@@ -78,7 +84,7 @@ export class RedisPresenceCache implements IPresenceCache {
         currentRoomId: null,
         lastActiveAt: new Date().toISOString(),
       };
-      pipeline.set(RedisKeys.userPresence(userId), JSON.stringify(userPresence), 'EX', 86400);
+      pipeline.set(RedisKeys.userPresence(userId), JSON.stringify(userPresence), 'EX', RedisTTL.USER_PRESENCE_OFFLINE);
     }
 
     await pipeline.exec();
@@ -98,7 +104,7 @@ export class RedisPresenceCache implements IPresenceCache {
     return this.redis.zcard(RedisKeys.roomViewers(roomId));
   }
 
-  public async setUserTyping(roomId: string, userId: string, ttlSeconds: number = 5): Promise<void> {
+  public async setUserTyping(roomId: string, userId: string, ttlSeconds: number = RedisTTL.TYPING_INDICATOR): Promise<void> {
     const key = RedisKeys.roomTyping(roomId);
     await this.redis.sadd(key, userId);
     await this.redis.expire(key, ttlSeconds);
@@ -113,7 +119,7 @@ export class RedisPresenceCache implements IPresenceCache {
   }
 
   public async setUserPresence(userId: string, data: UserPresenceData): Promise<void> {
-    await this.redis.set(RedisKeys.userPresence(userId), JSON.stringify(data), 'EX', 86400);
+    await this.redis.set(RedisKeys.userPresence(userId), JSON.stringify(data), 'EX', RedisTTL.USER_PRESENCE_ONLINE);
   }
 
   public async getUserPresence(userId: string): Promise<UserPresenceData | null> {
