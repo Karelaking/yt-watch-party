@@ -38,4 +38,7 @@ export interface SocketData {
   user: AuthUserContext;
   currentRoomId?: string;
   watchSessionId?: string;
+  role?: string;
+  isOwner?: boolean;
+  lastReactionAt?: number;
 }

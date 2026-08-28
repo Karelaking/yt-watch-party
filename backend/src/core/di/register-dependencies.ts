@@ -10,6 +10,7 @@ import { RedisCacheService } from '../../infrastructure/cache/redis-cache.servic
 import { RedisPlaybackStateCache } from '../../infrastructure/cache/playback-state.cache.js';
 import { RedisPresenceCache } from '../../infrastructure/cache/presence.cache.js';
 import { RoomPubSubService } from '../../infrastructure/redis/room-pubsub.service.js';
+import { SessionAccumulatorService } from '../../infrastructure/redis/session-accumulator.service.js';
 
 // Repositories
 import { PrismaUserRepository, PrismaUserDeviceRepository } from '../../modules/users/repositories/prisma-user.repository.js';
@@ -90,6 +91,10 @@ export function registerDependencies(): void {
   container.registerSingleton(
     TYPES.RoomPubSubService,
     (c) => new RoomPubSubService(c.resolve(TYPES.RedisClient))
+  );
+  container.registerSingleton(
+    TYPES.SessionAccumulatorService,
+    (c) => new SessionAccumulatorService(c.resolve(TYPES.RedisClient), c.resolve(TYPES.PrismaDb))
   );
 
   // Repositories

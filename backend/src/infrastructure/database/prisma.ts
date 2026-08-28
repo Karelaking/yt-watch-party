@@ -218,6 +218,31 @@ function createModelDelegate(modelName: string, dbClient: any = db) {
       return Array.isArray(updated) ? updated[0] : updated;
     },
 
+    async updateMany(args: { where: any; data: any }) {
+      const ormModel = getOrmModel();
+      if (!ormModel) return { count: 0 };
+      const flattened = flattenWhere(args.where);
+      const updateData = { ...args.data };
+
+      for (const [k, v] of Object.entries(updateData)) {
+        if (v && typeof v === 'object' && 'increment' in (v as any)) {
+          const existing = await ormModel.where(flattened).first();
+          const currentVal = existing ? (existing[k] ?? 0) : 0;
+          updateData[k] = currentVal + (v as any).increment;
+        }
+      }
+
+      for (const key of Object.keys(updateData)) {
+        if (updateData[key] === undefined) {
+          delete updateData[key];
+        }
+      }
+
+      const updated = await ormModel.where(flattened).update(convertDatesToTemporal(updateData));
+      const count = Array.isArray(updated) ? updated.length : updated ? 1 : 0;
+      return { count };
+    },
+
     async upsert(args: { where: any; update: any; create: any }) {
       const ormModel = getOrmModel();
       if (!ormModel) return null;

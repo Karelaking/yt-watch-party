@@ -24,6 +24,7 @@ import type { IChatService } from './modules/chat/services/chat.service.js';
 import type { IPlaylistService } from './modules/playlists/services/playlist.service.js';
 import type { IDistributedLockService } from './infrastructure/redis/redis-lock.service.js';
 import type { IRoomPubSubService } from './infrastructure/redis/room-pubsub.service.js';
+import type { ISessionAccumulatorService } from './infrastructure/redis/session-accumulator.service.js';
 
 async function bootstrap(): Promise<void> {
   const app = createApp();
@@ -31,6 +32,9 @@ async function bootstrap(): Promise<void> {
 
   // Initialize WebSockets Realtime Server
   const io = createSocketServer(httpServer);
+
+  const sessionAccumulator = container.resolve<ISessionAccumulatorService>(TYPES.SessionAccumulatorService);
+  sessionAccumulator.startAutoFlush(60000);
 
   // Initialize Realtime Watch Party Gateway
   new WatchPartyGateway(
@@ -47,7 +51,8 @@ async function bootstrap(): Promise<void> {
     container.resolve<IChatService>(TYPES.ChatService),
     container.resolve<IDistributedLockService>(TYPES.DistributedLockService),
     container.resolve<IPlaylistService>(TYPES.PlaylistService),
-    container.resolve<IRoomPubSubService>(TYPES.RoomPubSubService)
+    container.resolve<IRoomPubSubService>(TYPES.RoomPubSubService),
+    sessionAccumulator
   );
 
   // Start HTTP and WebSocket Server immediately so health checks succeed instantly
@@ -80,12 +85,14 @@ async function bootstrap(): Promise<void> {
       console.log('HTTP & WebSocket servers closed.');
 
       try {
+        sessionAccumulator.stopAutoFlush();
+        await sessionAccumulator.flushToDatabase();
         await Promise.allSettled([
           prisma.$disconnect(),
           disconnectMongoose(),
           disconnectRedis(),
         ]);
-        console.log('✅ All database connections closed cleanly.');
+        console.log('✅ All database connections and session metrics flushed cleanly.');
       } catch (err) {
         console.error('Error during database disconnection:', err);
       }

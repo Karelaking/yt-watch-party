@@ -24,6 +24,14 @@ export const RedisKeys = {
   socketUser: (socketId: string): string => `watchparty:socket:${socketId}:user`,
   socketRoom: (socketId: string): string => `watchparty:socket:${socketId}:room`,
 
+  // Caching & Lookups
+  roomMeta: (roomId: string): string => `watchparty:room:${roomId}:meta`,
+  roomSettings: (roomId: string): string => `watchparty:room:${roomId}:settings`,
+  roomBans: (roomId: string): string => `watchparty:room:${roomId}:bans`,
+
+  // Sessions & Metrics Accumulation
+  sessionsPendingWatchTime: (): string => `watchparty:sessions:pending_watch_time`,
+
   // Rate Limiting
   rateUserMessages: (userId: string): string => `watchparty:rate:user:${userId}:messages`,
   rateUserRequests: (userId: string): string => `watchparty:rate:user:${userId}:requests`,

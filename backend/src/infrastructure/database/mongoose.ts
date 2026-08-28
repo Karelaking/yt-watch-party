@@ -16,7 +16,8 @@ export async function connectMongoose(): Promise<typeof mongoose> {
   try {
     mongoose.set('strictQuery', true);
     await mongoose.connect(env.MONGODB_URL, {
-      maxPoolSize: 20,
+      maxPoolSize: 50,
+      minPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     });

@@ -37,6 +37,7 @@ export function createSocketServer(
   const io = new SocketIOServer<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>(
     httpServer,
     {
+      transports: ['websocket', 'polling'],
       cors: {
         origin: (origin, callback) => {
           if (isAllowedOrigin(origin)) {
@@ -49,6 +50,13 @@ export function createSocketServer(
       },
       pingTimeout: 20000,
       pingInterval: 10000,
+      maxHttpBufferSize: 1e6, // 1MB payload ceiling
+      perMessageDeflate: {
+        threshold: 1024, // Compress packets larger than 1KB
+        zlibDeflateOptions: {
+          chunkSize: 16 * 1024,
+        },
+      },
     }
   );
 

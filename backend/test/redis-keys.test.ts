@@ -25,4 +25,11 @@ describe('RedisKeys Taxonomy', () => {
     expect(RedisKeys.rateUserRequests('user-1')).toBe('watchparty:rate:user:user-1:requests');
     expect(RedisKeys.rateIpRequests('192.168.1.1')).toBe('watchparty:rate:ip:192.168.1.1:requests');
   });
+
+  it('should generate properly formatted caching and session accumulator keys', () => {
+    expect(RedisKeys.roomMeta('room-123')).toBe('watchparty:room:room-123:meta');
+    expect(RedisKeys.roomSettings('room-123')).toBe('watchparty:room:room-123:settings');
+    expect(RedisKeys.roomBans('room-123')).toBe('watchparty:room:room-123:bans');
+    expect(RedisKeys.sessionsPendingWatchTime()).toBe('watchparty:sessions:pending_watch_time');
+  });
 });

@@ -151,11 +151,14 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
       reactionCountRef.current += 1;
       const currentCount = reactionCountRef.current;
       const newParticle: FloatingParticle = {
-        id: `p-${currentCount}`,
+        id: `p-${currentCount}-${Date.now()}`,
         emoji: data.emoji,
         left: ((currentCount * 23) % 70) + 15,
       };
-      setFloatingReactions((prev) => [...prev, newParticle]);
+      setFloatingReactions((prev) => {
+        const sliced = prev.length >= 30 ? prev.slice(prev.length - 29) : prev;
+        return [...sliced, newParticle];
+      });
 
       setTimeout(() => {
         setFloatingReactions((prev) => prev.filter((p) => p.id !== newParticle.id));

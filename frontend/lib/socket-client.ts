@@ -145,8 +145,10 @@ export function getSocket(
       },
       transports: ["websocket", "polling"],
       reconnection: true,
-      reconnectionAttempts: 10,
+      reconnectionAttempts: 15,
       reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      randomizationFactor: 0.5, // Prevents Thundering Herd upon server restart
     });
 
     _socket.on("connect_error", async (err) => {

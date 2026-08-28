@@ -15,6 +15,7 @@ import type { IPresenceCache } from '../../infrastructure/cache/presence.cache.j
 import type { IChatService } from '../../modules/chat/services/chat.service.js';
 import type { IDistributedLockService } from '../../infrastructure/redis/redis-lock.service.js';
 import type { IRoomPubSubService } from '../../infrastructure/redis/room-pubsub.service.js';
+import type { ISessionAccumulatorService } from '../../infrastructure/redis/session-accumulator.service.js';
 import { RedisKeys } from '../../infrastructure/redis/redis-keys.js';
 import { DomainEventType } from '../../core/events/index.js';
 import { Permission, type RoomRole } from '../../modules/rbac/permissions.js';
@@ -23,6 +24,11 @@ type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, Record<str
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>;
 
 export class WatchPartyGateway {
+  // Low-latency local caches to prevent redundant PostgreSQL lookups on high-frequency socket events
+  private readonly roomCache = new Map<string, { data: any; expiresAt: number }>();
+  private readonly settingsCache = new Map<string, { data: any; expiresAt: number }>();
+  private readonly banCache = new Map<string, { bannedUserIds: Set<string>; expiresAt: number }>();
+
   constructor(
     private readonly io: TypedServer,
     private readonly playbackService: IPlaybackService,
@@ -37,7 +43,8 @@ export class WatchPartyGateway {
     private readonly chatService: IChatService,
     private readonly lockService: IDistributedLockService,
     private readonly playlistService?: IPlaylistService,
-    private readonly roomPubSubService?: IRoomPubSubService
+    private readonly roomPubSubService?: IRoomPubSubService,
+    private readonly sessionAccumulator?: ISessionAccumulatorService
   ) {
     this.registerEventSubscriptions();
     this.registerSocketHandlers();
@@ -133,6 +140,12 @@ export class WatchPartyGateway {
   private async resolveRoom(roomIdOrCode: string) {
     if (!roomIdOrCode) return null;
     const clean = roomIdOrCode.trim();
+    const now = Date.now();
+    const cached = this.roomCache.get(clean);
+    if (cached && cached.expiresAt > now) {
+      return cached.data;
+    }
+
     let room = await this.roomRepository.findById(clean);
     if (!room) {
       room = await this.roomRepository.findByCode(clean.toUpperCase());
@@ -140,7 +153,37 @@ export class WatchPartyGateway {
     if (!room) {
       room = await this.roomRepository.findBySlug(clean.toLowerCase());
     }
+
+    if (room) {
+      const entry = { data: room, expiresAt: now + 60000 };
+      this.roomCache.set(clean, entry);
+      this.roomCache.set(room.id, entry);
+      if (room.code) this.roomCache.set(room.code.toUpperCase(), entry);
+    }
     return room;
+  }
+
+  private async getSettingsCached(roomId: string) {
+    const now = Date.now();
+    const cached = this.settingsCache.get(roomId);
+    if (cached && cached.expiresAt > now) {
+      return cached.data;
+    }
+    const settings = await this.settingsRepository.findByRoomId(roomId);
+    if (settings) {
+      this.settingsCache.set(roomId, { data: settings, expiresAt: now + 60000 });
+    }
+    return settings;
+  }
+
+  private async isUserBannedCached(roomId: string, userId: string): Promise<boolean> {
+    const now = Date.now();
+    const cached = this.banCache.get(roomId);
+    if (cached && cached.expiresAt > now) {
+      return cached.bannedUserIds.has(userId);
+    }
+    const ban = await this.banRepository.findActiveBan(roomId, userId);
+    return !!ban;
   }
 
   private registerSocketHandlers(): void {
@@ -159,9 +202,9 @@ export class WatchPartyGateway {
 
           const canonicalRoomId = room.id;
 
-          // Check ban
-          const ban = await this.banRepository.findActiveBan(canonicalRoomId, user.id);
-          if (ban) {
+          // Check ban with cache
+          const isBanned = await this.isUserBannedCached(canonicalRoomId, user.id);
+          if (isBanned) {
             callback?.({ success: false, error: 'User is banned from this room' });
             return;
           }
@@ -192,12 +235,16 @@ export class WatchPartyGateway {
             }
           }
 
+          const resolvedRole: RoomRole = isOwner ? 'HOST' : (membership?.role || 'PARTICIPANT');
+          socket.data.role = resolvedRole;
+          socket.data.isOwner = isOwner;
+
           const currentState = await this.playbackService.getState(canonicalRoomId);
 
           callback?.({ success: true, state: currentState });
           socket.to(channel).emit('room:member_joined', {
             userId: user.id,
-            role: isOwner ? 'HOST' : (membership?.role || 'PARTICIPANT'),
+            role: resolvedRole,
             displayName: user.displayName,
           });
         } catch (err) {
@@ -218,13 +265,12 @@ export class WatchPartyGateway {
 
           const canonicalRoomId = room.id;
 
-          // Check RBAC permission for PLAYBACK_CONTROL
-          const settings = await this.settingsRepository.findByRoomId(canonicalRoomId);
-          const membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.id);
-          const isOwner = room.ownerId === user.id || room.ownerId === user.clerkUserId;
+          // Check RBAC permission for PLAYBACK_CONTROL using cached settings & socket role
+          const settings = await this.getSettingsCached(canonicalRoomId);
+          const isOwner = socket.data.isOwner !== undefined ? socket.data.isOwner : (room.ownerId === user.id || room.ownerId === user.clerkUserId);
           const role: RoomRole = isOwner
             ? 'HOST'
-            : (membership?.role || (settings?.onlyHostCanControlPlayback ? 'VIEWER' : 'PARTICIPANT'));
+            : ((socket.data.role as RoomRole) || (settings?.onlyHostCanControlPlayback ? 'VIEWER' : 'PARTICIPANT'));
 
           const isAllowed = this.rbacEngine.can(role, settings, Permission.PLAYBACK_CONTROL);
           if (!isAllowed) {
@@ -313,11 +359,17 @@ export class WatchPartyGateway {
         }
       });
 
-      // Handle live floating emoji reactions
+      // Handle live floating emoji reactions with burst throttling
       socket.on('room:reaction', async (data) => {
         try {
           const { roomId, emoji } = data;
           if (!roomId || !emoji) return;
+
+          const now = Date.now();
+          if (socket.data.lastReactionAt && now - socket.data.lastReactionAt < 100) {
+            return; // Throttle clicks faster than 100ms
+          }
+          socket.data.lastReactionAt = now;
 
           const room = await this.resolveRoom(roomId);
           const canonicalRoomId = room ? room.id : roomId;
@@ -356,6 +408,11 @@ export class WatchPartyGateway {
           }
 
           const updated = await this.settingsRepository.update(canonicalRoomId, settings as any);
+          
+          // Invalidate cache
+          this.settingsCache.delete(canonicalRoomId);
+          this.roomCache.delete(canonicalRoomId);
+
           const settingsPayload = {
             roomId: canonicalRoomId,
             settings: updated,
@@ -374,10 +431,14 @@ export class WatchPartyGateway {
         }
       });
 
-      // Handle heartbeat
+      // Handle heartbeat via Session Accumulator
       socket.on('playback:heartbeat', async () => {
         if (socket.data.watchSessionId) {
-          await this.sessionRepository.heartbeatWatchSession(socket.data.watchSessionId);
+          if (this.sessionAccumulator) {
+            await this.sessionAccumulator.recordHeartbeat(socket.data.watchSessionId, 15);
+          } else {
+            await this.sessionRepository.heartbeatWatchSession(socket.data.watchSessionId);
+          }
         }
       });
 
@@ -419,13 +480,12 @@ export class WatchPartyGateway {
 
           const canonicalRoomId = room.id;
 
-          // Verify RBAC permission for SCREEN_SHARE
-          const settings = await this.settingsRepository.findByRoomId(canonicalRoomId);
-          const membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.id);
-          const isOwner = room.ownerId === user.id || room.ownerId === user.clerkUserId;
+          // Verify RBAC permission for SCREEN_SHARE using cached settings & socket role
+          const settings = await this.getSettingsCached(canonicalRoomId);
+          const isOwner = socket.data.isOwner !== undefined ? socket.data.isOwner : (room.ownerId === user.id || room.ownerId === user.clerkUserId);
           const role: RoomRole = isOwner
             ? 'HOST'
-            : (membership?.role || 'VIEWER');
+            : ((socket.data.role as RoomRole) || 'VIEWER');
 
           const isAllowed = this.rbacEngine.can(role, settings, Permission.SCREEN_SHARE);
           if (!isAllowed) return;
@@ -451,8 +511,11 @@ export class WatchPartyGateway {
           // Clean up Redis presence
           await this.presenceCache.removeSocket(socket.id);
 
-          // End watch session
+          // End watch session and flush accumulated time
           if (socket.data.watchSessionId) {
+            if (this.sessionAccumulator) {
+              await this.sessionAccumulator.flushSession(socket.data.watchSessionId);
+            }
             await this.sessionRepository.endWatchSession(socket.data.watchSessionId);
             socket.data.watchSessionId = undefined;
           }
@@ -475,6 +538,9 @@ export class WatchPartyGateway {
         const { roomId } = await this.presenceCache.removeSocket(socket.id);
 
         if (socket.data.watchSessionId) {
+          if (this.sessionAccumulator) {
+            await this.sessionAccumulator.flushSession(socket.data.watchSessionId);
+          }
           await this.sessionRepository.endWatchSession(socket.data.watchSessionId);
         }
 

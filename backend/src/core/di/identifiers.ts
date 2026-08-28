@@ -10,6 +10,7 @@ export const TYPES = {
   PlaybackStateCache: Symbol.for('PlaybackStateCache'),
   PresenceCache: Symbol.for('PresenceCache'),
   RoomPubSubService: Symbol.for('RoomPubSubService'),
+  SessionAccumulatorService: Symbol.for('SessionAccumulatorService'),
 
   // Repositories
   UserRepository: Symbol.for('UserRepository'),

@@ -29,4 +29,4 @@ COPY --from=builder /app/src/prisma ./src/prisma
 
 EXPOSE 3001
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/cluster.js"]
