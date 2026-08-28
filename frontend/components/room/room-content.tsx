@@ -322,6 +322,24 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
       });
     };
 
+    const handleMemberUpdated = (data: { userId: string; nickname?: string | null; displayName?: string | null }) => {
+      setRoom((prev) => {
+        if (!prev) return prev;
+        const newNick = data.nickname || data.displayName;
+        if (!newNick) return prev;
+        return {
+          ...prev,
+          memberships: prev.memberships.map((m) =>
+            m.userId === data.userId ||
+            (m.user as any)?.clerkUserId === data.userId ||
+            (m.user as any)?.id === data.userId
+              ? { ...m, nickname: newNick }
+              : m
+          ),
+        };
+      });
+    };
+
     socket.on("playback:sync", handlePlaybackSync);
     socket.on("playback:action", handlePlaybackAction);
     socket.on("playlist:sync", handlePlaylistSync);
@@ -330,6 +348,7 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
     socket.on("chat:message", handleChatMessage);
     socket.on("room:member_joined", handleMemberJoined);
     socket.on("room:member_left", handleMemberLeft);
+    socket.on("room:member_updated", handleMemberUpdated);
     socket.on("room:role_changed", handleRoleChanged);
 
     // Heartbeat ticker to keep session active
@@ -352,6 +371,7 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
       socket.off("chat:message", handleChatMessage);
       socket.off("room:member_joined", handleMemberJoined);
       socket.off("room:member_left", handleMemberLeft);
+      socket.off("room:member_updated", handleMemberUpdated);
       socket.off("room:role_changed", handleRoleChanged);
     };
   }, [socket, room?.id, setRoom]);
@@ -935,16 +955,38 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
     }
   };
 
-  const handleUpdateNickname = (newNickname: string) => {
+  const handleUpdateNickname = async (newNickname: string) => {
+    if (!newNickname || !newNickname.trim()) return;
+    const trimmed = newNickname.trim();
+
     setRoom((prev) => {
       if (!prev) return prev;
       return {
         ...prev,
         memberships: prev.memberships.map((m) =>
-          m.userId === currentUserId ? { ...m, nickname: newNickname } : m
+          m.userId === currentUserId ||
+          (m.user as any)?.clerkUserId === currentUserId ||
+          (m.user as any)?.id === currentUserId
+            ? { ...m, nickname: trimmed }
+            : m
         ),
       };
     });
+
+    if (socket && isConnected) {
+      socket.emit("room:nickname", { roomId: room.id, nickname: trimmed });
+    }
+
+    try {
+      const token = await getToken();
+      await apiClient.patch(
+        `/memberships/rooms/${room.id}/nickname`,
+        { nickname: trimmed },
+        token
+      );
+    } catch (err) {
+      console.warn("Notice: nickname update sync:", err);
+    }
   };
 
   const handleUpdateRoomMeta = async (updates: Partial<Room>) => {

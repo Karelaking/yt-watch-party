@@ -48,6 +48,7 @@ export interface IMembershipRepository extends IRepository<MembershipEntity> {
   listActiveRoomMembers(roomId: string): Promise<MembershipEntity[]>;
   create(data: { roomId: string; userId: string; role?: RoomRole; nickname?: string | null }): Promise<MembershipEntity>;
   updateRole(membershipId: string, newRole: RoomRole, changedById: string, reason?: string): Promise<MembershipEntity | null>;
+  updateNickname(membershipId: string, nickname: string): Promise<MembershipEntity | null>;
   updateStatus(membershipId: string, status: MembershipStatus): Promise<MembershipEntity | null>;
   countActiveMembers(roomId: string): Promise<number>;
 }

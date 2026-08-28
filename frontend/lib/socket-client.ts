@@ -39,8 +39,9 @@ export interface ServerToClientEvents {
     role: string;
     displayName?: string | null;
   }) => void;
-  "room:member_left": (data: { userId: string }) => void;
-  "room:role_changed": (data: { userId: string; newRole: string }) => void;
+  "room:member_left": (data: { userId: string; reason?: string }) => void;
+  "room:member_updated": (data: { userId: string; nickname?: string | null; displayName?: string | null }) => void;
+  "room:role_changed": (data: { userId: string; newRole: string; role?: string }) => void;
   "room:reaction": (data: { userId: string; userName: string; emoji: string }) => void;
   "room:settings_updated": (data: { roomId: string; settings: any }) => void;
   "chat:message": (data: {
@@ -82,6 +83,10 @@ export interface ClientToServerEvents {
     callback?: (response: { success: boolean; error?: string }) => void
   ) => void;
   "room:reaction": (data: { roomId: string; emoji: string }) => void;
+  "room:nickname": (
+    data: { roomId: string; nickname: string },
+    callback?: (response: { success: boolean; error?: string }) => void
+  ) => void;
   "room:settings_update": (
     data: { roomId: string; settings: unknown },
     callback?: (response: { success: boolean; error?: string }) => void

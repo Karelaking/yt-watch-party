@@ -77,6 +77,9 @@ export class WatchPartyGateway {
           case 'ROOM_MEMBER_LEFT':
             this.io.to(roomChannel).emit('room:member_left', message.payload as any);
             break;
+          case 'ROOM_MEMBER_UPDATED':
+            this.io.to(roomChannel).emit('room:member_updated', message.payload as any);
+            break;
           case 'ROOM_ROLE_CHANGED':
             this.io.to(roomChannel).emit('room:role_changed', message.payload as any);
             break;
@@ -438,6 +441,46 @@ export class WatchPartyGateway {
           }
         } catch (err) {
           console.warn('[Socket room:reaction warning]:', err);
+        }
+      });
+
+      // Handle live nickname update
+      socket.on('room:nickname', async (data, callback) => {
+        try {
+          const { roomId, nickname } = data;
+          if (!roomId || !nickname || typeof nickname !== 'string') {
+            callback?.({ success: false, error: 'Invalid nickname payload' });
+            return;
+          }
+
+          const room = await this.resolveRoom(roomId);
+          if (!room) {
+            callback?.({ success: false, error: 'Room not found' });
+            return;
+          }
+
+          const canonicalRoomId = room.id;
+          const membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.id);
+          if (membership) {
+            await this.membershipRepository.updateNickname(membership.id, nickname.trim());
+          }
+
+          const updatePayload = {
+            userId: user.id,
+            nickname: nickname.trim(),
+            displayName: nickname.trim(),
+          };
+
+          if (this.roomPubSubService) {
+            await this.roomPubSubService.publish(canonicalRoomId, 'ROOM_MEMBER_UPDATED', updatePayload, user.id);
+          } else {
+            this.io.to(`room:${canonicalRoomId}`).emit('room:member_updated', updatePayload);
+          }
+
+          callback?.({ success: true });
+        } catch (err) {
+          console.error('[Socket room:nickname] error:', err);
+          callback?.({ success: false, error: 'Failed to update nickname' });
         }
       });
 

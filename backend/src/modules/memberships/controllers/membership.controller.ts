@@ -39,6 +39,14 @@ export class MembershipController extends BaseController {
     return this.ok(res, updated, 'Member role updated successfully');
   });
 
+  public updateNickname = this.catchAsync(async (req: Request, res: Response) => {
+    if (!req.user) throw new UnauthorizedError();
+    const roomId = req.params['roomId'] as string;
+    const { nickname } = req.body as { nickname: string };
+    const updated = await this.membershipService.updateNickname(roomId, req.user.id, nickname);
+    return this.ok(res, updated, 'Nickname updated successfully');
+  });
+
   public kickMember = this.catchAsync(async (req: Request, res: Response) => {
     if (!req.user) throw new UnauthorizedError();
     const roomId = req.params['roomId'] as string;

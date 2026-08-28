@@ -32,7 +32,12 @@ export const banMemberSchema = z.object({
   message: 'targetUserId or userId is required',
 });
 
+export const updateNicknameSchema = z.object({
+  nickname: z.string().min(1).max(50),
+});
+
 export type JoinRoomDto = z.infer<typeof joinRoomSchema>;
 export type ChangeRoleDto = z.infer<typeof changeRoleSchema>;
 export type KickMemberDto = z.infer<typeof kickMemberSchema>;
 export type BanMemberDto = z.infer<typeof banMemberSchema>;
+export type UpdateNicknameDto = z.infer<typeof updateNicknameSchema>;

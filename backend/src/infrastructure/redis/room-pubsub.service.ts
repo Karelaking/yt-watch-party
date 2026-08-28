@@ -10,8 +10,10 @@ export type RoomPubSubMessageType =
   | 'PLAYLIST_SYNC'
   | 'ROOM_REACTION'
   | 'ROOM_SETTINGS_UPDATED'
+  | 'ROOM_UPDATED'
   | 'ROOM_MEMBER_JOINED'
   | 'ROOM_MEMBER_LEFT'
+  | 'ROOM_MEMBER_UPDATED'
   | 'ROOM_ROLE_CHANGED';
 
 export interface RoomPubSubMessage<T = unknown> {

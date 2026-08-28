@@ -22,6 +22,7 @@ export interface IMembershipService extends IService {
   leaveRoom(userId: string, roomId: string): Promise<void>;
   listMembers(roomId: string): Promise<MembershipEntity[]>;
   changeRole(roomId: string, targetUserId: string, newRole: RoomRole, actorId: string, reason?: string): Promise<MembershipEntity>;
+  updateNickname(roomId: string, userId: string, nickname: string): Promise<MembershipEntity>;
   kickMember(roomId: string, targetUserId: string, actorId: string): Promise<void>;
   banMember(roomId: string, targetUserId: string, actorId: string, reason?: string, expiresAt?: Date): Promise<BanEntity>;
   unbanMember(roomId: string, targetUserId: string): Promise<boolean>;
@@ -243,6 +244,25 @@ export class MembershipService implements IMembershipService {
 
   public async unbanMember(roomId: string, targetUserId: string): Promise<boolean> {
     return this.banRepository.removeBan(roomId, targetUserId);
+  }
+
+  public async updateNickname(roomId: string, userId: string, nickname: string): Promise<MembershipEntity> {
+    const membership = await this.membershipRepository.findByRoomAndUser(roomId, userId);
+    if (!membership || membership.status !== 'ACTIVE') {
+      throw new NotFoundError('User is not an active member in this room');
+    }
+
+    const updated = await this.membershipRepository.updateNickname(membership.id, nickname);
+    if (!updated) throw new NotFoundError('Failed to update nickname');
+
+    this.eventDispatcher.publish(new MemberJoinedEvent({
+      roomId,
+      userId,
+      role: membership.role,
+      displayName: nickname,
+    }));
+
+    return updated;
   }
 
   public async listBans(roomId: string): Promise<BanEntity[]> {

@@ -34,6 +34,13 @@ export function MembersTab({
   const [banReason, setBanReason] = React.useState("Disruptive behavior");
   const [banType, setBanType] = React.useState<BanType>("USER");
 
+  const currentMembership = memberships.find(
+    (m) =>
+      m.userId === currentUserId ||
+      (m.user as any)?.clerkUserId === currentUserId ||
+      (m.user as any)?.id === currentUserId
+  );
+
   const handleSaveNickname = (e: React.FormEvent) => {
     e.preventDefault();
     if (!nicknameInput.trim()) return;
@@ -54,10 +61,15 @@ export function MembersTab({
         {/* Nickname Editor for Self */}
         <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1.5">
           <div className="flex items-center justify-between text-[11px]">
-            <span className="text-zinc-400 font-medium">My Nickname</span>
+            <span className="text-zinc-400 font-medium">
+              Nickname: <strong className="text-zinc-200 font-semibold">{currentMembership?.nickname || currentMembership?.user.displayName || "Default"}</strong>
+            </span>
             {!editingNickname ? (
               <button
-                onClick={() => setEditingNickname(true)}
+                onClick={() => {
+                  setNicknameInput(currentMembership?.nickname || "");
+                  setEditingNickname(true);
+                }}
                 className="text-zinc-300 hover:text-white flex items-center gap-1 cursor-pointer"
               >
                 <Edit2 className="w-3 h-3" /> Edit
@@ -72,6 +84,8 @@ export function MembersTab({
                 placeholder="Enter nickname..."
                 value={nicknameInput}
                 onChange={(e) => setNicknameInput(e.target.value)}
+                autoFocus
+                maxLength={50}
                 className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white outline-none"
               />
               <button
@@ -79,6 +93,13 @@ export function MembersTab({
                 className="px-2 py-1 bg-white text-zinc-950 rounded-lg text-xs font-semibold cursor-pointer"
               >
                 Save
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingNickname(false)}
+                className="px-2 py-1 text-zinc-400 hover:text-white text-xs cursor-pointer"
+              >
+                Cancel
               </button>
             </form>
           ) : null}

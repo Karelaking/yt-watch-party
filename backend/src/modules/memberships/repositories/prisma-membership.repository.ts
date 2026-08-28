@@ -130,6 +130,14 @@ export class PrismaMembershipRepository implements IMembershipRepository {
     return (updated as MembershipEntity) || null;
   }
 
+  public async updateNickname(membershipId: string, nickname: string): Promise<MembershipEntity | null> {
+    const updated = await this.prisma.roomMembership.update({
+      where: { id: membershipId },
+      data: { nickname },
+    });
+    return (updated as MembershipEntity) || null;
+  }
+
   public async updateStatus(membershipId: string, status: MembershipStatus): Promise<MembershipEntity | null> {
     const updateData: Record<string, unknown> = { status };
     if (status === 'LEFT') updateData['leftAt'] = new Date();

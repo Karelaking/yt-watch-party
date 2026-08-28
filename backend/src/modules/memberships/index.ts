@@ -11,6 +11,7 @@ import {
   changeRoleSchema,
   kickMemberSchema,
   banMemberSchema,
+  updateNicknameSchema,
 } from './dtos/membership.dto.js';
 
 export function createMembershipRoutes(): Router {
@@ -21,6 +22,13 @@ export function createMembershipRoutes(): Router {
   router.post('/leave/:roomId', requireAuth, controller.leaveRoom);
 
   router.get('/rooms/:roomId/members', optionalAuth, requireRoomPermission(Permission.ROOM_VIEW), controller.listMembers);
+
+  router.patch(
+    '/rooms/:roomId/nickname',
+    requireAuth,
+    validateRequest({ body: updateNicknameSchema }),
+    controller.updateNickname
+  );
 
   router.patch(
     '/rooms/:roomId/role',
