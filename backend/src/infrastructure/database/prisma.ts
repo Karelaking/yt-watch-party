@@ -248,11 +248,19 @@ function createModelDelegate(modelName: string, dbClient: any = db) {
 
     async count(args?: { where?: any }) {
       const ormModel = getOrmModel();
-      if (args?.where) {
-        const flattened = flattenWhere(args.where);
-        return await ormModel.where(flattened).count();
+      if (!ormModel) return 0;
+      try {
+        if (args?.where) {
+          const flattened = flattenWhere(args.where);
+          const rows = await ormModel.where(flattened).all();
+          return rows ? rows.length : 0;
+        }
+        const rows = await ormModel.all();
+        return rows ? rows.length : 0;
+      } catch (err) {
+        console.warn(`[Prisma count error on ${modelName}]:`, err);
+        return 0;
       }
-      return await ormModel.count();
     },
   };
 }

@@ -21,14 +21,13 @@ function resolveApiBase(): string {
   // Dev fallback: reach the backend on the same host that served this page,
   // so LAN devices work without hardcoding localhost.
   if (typeof window !== "undefined") {
-    return `${window.location.protocol}//${window.location.hostname}:3001`;
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1" || /^(\d{1,3}\.){3}\d{1,3}$/.test(host)) {
+      return `${window.location.protocol}//${host}:3001`;
+    }
   }
-  return "http://localhost:3001";
+  return "https://yt-watch-party.up.railway.app";
 }
-
-const rawBase = resolveApiBase();
-const BASE_URL = rawBase.endsWith("/api/v1") ? rawBase : `${rawBase}/api/v1`;
-
 
 async function request<T>(
   method: string,
@@ -36,6 +35,8 @@ async function request<T>(
   token?: string | null,
   body?: unknown
 ): Promise<T> {
+  const rawBase = resolveApiBase();
+  const baseUrl = rawBase.endsWith("/api/v1") ? rawBase : `${rawBase}/api/v1`;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -43,7 +44,7 @@ async function request<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(`${baseUrl}${path}`, {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,

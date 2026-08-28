@@ -108,9 +108,12 @@ function resolveWsUrl(): string {
   // Dev fallback: connect to the backend on the same host that served this
   // page, so LAN devices work without hardcoding localhost.
   if (typeof window !== "undefined") {
-    return `${window.location.protocol}//${window.location.hostname}:3001`;
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1" || /^(\d{1,3}\.){3}\d{1,3}$/.test(host)) {
+      return `${window.location.protocol}//${host}:3001`;
+    }
   }
-  return "http://localhost:3001";
+  return "https://yt-watch-party.up.railway.app";
 }
 
 export function getSocket(
