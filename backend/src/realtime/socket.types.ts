@@ -18,7 +18,16 @@ export interface ServerToClientEvents {
   'room:role_changed': (data: { userId: string; newRole: string; role?: string }) => void;
   'room:reaction': (data: { userId: string; userName: string; emoji: string }) => void;
   'room:settings_updated': (data: { roomId: string; settings: unknown }) => void;
-  'chat:message': (data: { id: string; senderId: string; senderName: string; text: string; sentAt: string }) => void;
+  'chat:message': (data: {
+    id: string;
+    senderId: string;
+    senderName: string;
+    userNickname?: string | null;
+    userRole?: string | null;
+    userAvatar?: string | null;
+    text: string;
+    sentAt: string;
+  }) => void;
   'screenshare:signal': (data: { senderId: string; signal: unknown }) => void;
   'error': (data: { code: string; message: string }) => void;
 }
@@ -32,7 +41,7 @@ export interface ClientToServerEvents {
   'room:reaction': (data: { roomId: string; emoji: string; userName?: string }) => void;
   'room:nickname': (data: { roomId: string; nickname: string }, callback?: (response: { success: boolean; error?: string }) => void) => void;
   'room:settings_update': (data: { roomId: string; settings: unknown }, callback?: (response: { success: boolean; error?: string }) => void) => void;
-  'chat:send': (data: { roomId: string; text: string }) => void;
+  'chat:send': (data: { roomId: string; text: string; userName?: string; userNickname?: string }) => void;
   'screenshare:signal': (data: { roomId: string; targetUserId?: string; signal: unknown }) => void;
 }
 

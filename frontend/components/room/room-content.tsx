@@ -207,6 +207,9 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
       id: string;
       senderId: string;
       senderName: string;
+      userNickname?: string | null;
+      userRole?: string | null;
+      userAvatar?: string | null;
       text: string;
       sentAt: string;
     }) => {
@@ -214,13 +217,34 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
         if (!prev) return prev;
         if (prev.chatMessages.some((m) => m.id === msg.id)) return prev;
 
+        // Resolve member in room to get latest live nickname and role
+        const member = prev.memberships.find(
+          (m) =>
+            m.userId === msg.senderId ||
+            (m.user as any)?.clerkUserId === msg.senderId ||
+            (m.user as any)?.id === msg.senderId
+        );
+
+        const effectiveDisplayName =
+          member?.nickname ||
+          msg.userNickname ||
+          msg.senderName ||
+          (member?.user as any)?.displayName ||
+          (member?.user as any)?.username ||
+          "Member";
+
+        const resolvedRole =
+          msg.userRole ||
+          member?.role ||
+          (prev.ownerId === msg.senderId ? "HOST" : "PARTICIPANT");
+
         const newChatMessage: ChatMessage = {
           id: msg.id,
           roomId: prev.id,
           userId: msg.senderId,
-          userName: msg.senderName,
-          userAvatar: null,
-          userRole: prev.ownerId === msg.senderId ? "HOST" : "PARTICIPANT",
+          userName: effectiveDisplayName,
+          userAvatar: msg.userAvatar || (member?.user as any)?.avatarUrl || null,
+          userRole: resolvedRole as any,
           content: msg.text,
           createdAt: msg.sentAt,
         };
@@ -630,10 +654,14 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
   const handleSendMessage = async (text: string) => {
     if (!text || text.trim().length === 0) return;
 
+    const effectiveNickname = userMembership?.nickname || currentUserName;
+
     if (socket && isConnected) {
       socket.emit("chat:send", {
         roomId: room.id,
         text: text.trim(),
+        userName: effectiveNickname,
+        userNickname: userMembership?.nickname || undefined,
       });
     } else {
       // Fallback optimistic display
@@ -641,7 +669,7 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
         id: `msg-${Date.now()}`,
         roomId: room.id,
         userId: currentUserId,
-        userName: userMembership?.nickname || currentUserName,
+        userName: effectiveNickname,
         userAvatar: currentUserAvatar,
         userRole: isHost ? "HOST" : isMod ? "MODERATOR" : "PARTICIPANT",
         content: text,

@@ -7,7 +7,7 @@ import { RoomVisibility } from "@/lib/contract-types";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { apiClient } from "@/lib/api-client";
 import { YouTubeIcon } from "@/components/ds/brand-icons";
-import { X, Globe, Share2, ChevronDown, Loader2 } from "lucide-react";
+import { X, Globe, Share2, Lock, ChevronDown, Loader2 } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface CreateRoomModalProps {
@@ -203,7 +203,7 @@ export function CreateRoomModal({
             <label className="text-xs font-semibold text-zinc-800">
               Visibility
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setVisibility("PUBLIC")}
@@ -213,7 +213,7 @@ export function CreateRoomModal({
                     : "border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100"
                 }`}
               >
-                <Globe className="w-4 h-4" />
+                <Globe className="w-4 h-4 shrink-0" />
                 <div>
                   <div className="text-xs font-bold leading-tight">Public</div>
                   <div className={`text-[10px] ${visibility === "PUBLIC" ? "text-zinc-300" : "text-zinc-500"}`}>
@@ -231,11 +231,29 @@ export function CreateRoomModal({
                     : "border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100"
                 }`}
               >
-                <Share2 className="w-4 h-4" />
+                <Share2 className="w-4 h-4 shrink-0" />
                 <div>
                   <div className="text-xs font-bold leading-tight">Unlisted</div>
                   <div className={`text-[10px] ${visibility === "UNLISTED" ? "text-zinc-300" : "text-zinc-500"}`}>
                     Link only
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setVisibility("PRIVATE")}
+                className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer flex items-center gap-2 ${
+                  visibility === "PRIVATE"
+                    ? "border-zinc-950 bg-zinc-950 text-white"
+                    : "border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100"
+                }`}
+              >
+                <Lock className="w-4 h-4 shrink-0" />
+                <div>
+                  <div className="text-xs font-bold leading-tight">Invite Only</div>
+                  <div className={`text-[10px] ${visibility === "PRIVATE" ? "text-zinc-300" : "text-zinc-500"}`}>
+                    Private
                   </div>
                 </div>
               </button>

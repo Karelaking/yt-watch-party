@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useUser, useAuth } from "@clerk/nextjs";
 import { apiClient } from "@/lib/api-client";
 import { Room } from "@/lib/contract-types";
-import { Users, Play, Copy, Check, Lock, Globe, ArrowUpRight, Trash2, Loader2 } from "lucide-react";
+import { Users, Play, Copy, Check, Lock, Globe, Share2, ArrowUpRight, Trash2, Loader2 } from "lucide-react";
 
 interface RoomCardProps {
   room: Room;
@@ -19,10 +19,11 @@ export function RoomCard({ room }: RoomCardProps): React.JSX.Element {
   const currentMedia = room.media[0] || null;
 
   const isOwner =
-    user?.id &&
-    (room.ownerId === user.id ||
-      (room.owner as any)?.clerkUserId === user.id ||
-      (room.owner as any)?.id === user.id);
+    Boolean(user?.id) &&
+    (room.ownerId === user?.id ||
+      (room.owner as any)?.clerkUserId === user?.id ||
+      (room.owner as any)?.id === user?.id ||
+      (room.owner as any)?.email === user?.primaryEmailAddress?.emailAddress);
 
   const handleCopyCode = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -80,9 +81,13 @@ export function RoomCard({ room }: RoomCardProps): React.JSX.Element {
               <>
                 <Globe className="w-2.5 h-2.5 text-emerald-400" /> Public
               </>
+            ) : room.visibility === "UNLISTED" ? (
+              <>
+                <Share2 className="w-2.5 h-2.5 text-sky-400" /> Unlisted
+              </>
             ) : (
               <>
-                <Lock className="w-2.5 h-2.5 text-amber-400" /> Private
+                <Lock className="w-2.5 h-2.5 text-amber-400" /> Invite Only
               </>
             )}
           </div>

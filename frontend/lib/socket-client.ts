@@ -48,6 +48,9 @@ export interface ServerToClientEvents {
     id: string;
     senderId: string;
     senderName: string;
+    userNickname?: string | null;
+    userRole?: string | null;
+    userAvatar?: string | null;
     text: string;
     sentAt: string;
   }) => void;
@@ -91,7 +94,7 @@ export interface ClientToServerEvents {
     data: { roomId: string; settings: unknown },
     callback?: (response: { success: boolean; error?: string }) => void
   ) => void;
-  "chat:send": (data: { roomId: string; text: string }) => void;
+  "chat:send": (data: { roomId: string; text: string; userName?: string; userNickname?: string }) => void;
   "screenshare:signal": (data: {
     roomId: string;
     targetUserId?: string;

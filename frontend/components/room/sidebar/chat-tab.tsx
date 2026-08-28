@@ -2,7 +2,18 @@
 
 import * as React from "react";
 import type { ChatMessage, RoomSettings } from "@/lib/contract-types";
-import { Send } from "lucide-react";
+import { Send, MessageSquareDashed } from "lucide-react";
+import {
+  ChatMessageList,
+  ChatScrollToBottom,
+  ChatBubble,
+  ChatBubbleAvatar,
+  ChatBubbleHeader,
+  ChatBubbleMessage,
+  ChatBubbleTimestamp,
+  Input,
+  Button,
+} from "@/components/ui";
 
 interface ChatTabProps {
   messages: ChatMessage[];
@@ -21,12 +32,58 @@ export function ChatTab({
 }: ChatTabProps): React.JSX.Element {
   const [messageText, setMessageText] = React.useState("");
   const [slowModeCountdown, setSlowModeCountdown] = React.useState(0);
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const [showScrollBottom, setShowScrollBottom] = React.useState(false);
+  const [unreadCount, setUnreadCount] = React.useState(0);
 
-  // Auto-scroll chat on new messages
+  const scrollViewportRef = React.useRef<HTMLDivElement>(null);
+  const isAtBottomRef = React.useRef(true);
+  const prevMessagesCountRef = React.useRef(messages.length);
+
+  // Check scroll position to determine if at bottom
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const distanceFromBottom =
+      target.scrollHeight - target.scrollTop - target.clientHeight;
+    const isNearBottom = distanceFromBottom < 60;
+
+    isAtBottomRef.current = isNearBottom;
+    setShowScrollBottom(!isNearBottom);
+
+    if (isNearBottom) {
+      setUnreadCount(0);
+    }
+  };
+
+  const scrollToBottom = React.useCallback((behavior: ScrollBehavior = "smooth") => {
+    if (scrollViewportRef.current) {
+      scrollViewportRef.current.scrollTo({
+        top: scrollViewportRef.current.scrollHeight,
+        behavior,
+      });
+      isAtBottomRef.current = true;
+      setShowScrollBottom(false);
+      setUnreadCount(0);
+    }
+  }, []);
+
+  // Auto-scroll on new messages if already near bottom or increment unread counter
   React.useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const isNewMessage = messages.length > prevMessagesCountRef.current;
+    prevMessagesCountRef.current = messages.length;
+
+    if (!isNewMessage) return;
+
+    if (isAtBottomRef.current) {
+      scrollToBottom("smooth");
+    } else {
+      setUnreadCount((prev) => prev + 1);
+    }
+  }, [messages, scrollToBottom]);
+
+  // Initial scroll to bottom on mount
+  React.useEffect(() => {
+    scrollToBottom("auto");
+  }, [scrollToBottom]);
 
   // Slow mode timer
   React.useEffect(() => {
@@ -40,11 +97,15 @@ export function ChatTab({
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageText.trim()) return;
+    const trimmed = messageText.trim();
+    if (!trimmed) return;
     if (slowModeCountdown > 0 && !isHostOrMod) return;
 
-    onSendMessage(messageText.trim());
+    onSendMessage(trimmed);
     setMessageText("");
+
+    // Automatically scroll down when the user sends a message
+    setTimeout(() => scrollToBottom("smooth"), 50);
 
     if (settings.slowModeSeconds > 0 && !isHostOrMod) {
       setSlowModeCountdown(settings.slowModeSeconds);
@@ -52,60 +113,82 @@ export function ChatTab({
   };
 
   return (
-    <div className="flex-1 flex flex-col justify-between overflow-hidden">
-      <div className="flex-1 p-3 overflow-y-auto space-y-2.5">
+    <div className="relative flex-1 flex flex-col justify-between overflow-hidden bg-zinc-950/60">
+      {/* Scrollable Message List */}
+      <ChatMessageList
+        ref={scrollViewportRef}
+        onScroll={handleScroll}
+        className="flex-1 p-3 overflow-y-auto space-y-3 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.15)_transparent]"
+      >
         {messages.length === 0 ? (
-          <div className="text-center py-16 text-zinc-600 text-xs">
-            No messages yet. Send a message to start the room chat!
+          <div className="flex flex-col items-center justify-center py-20 text-center gap-2 text-zinc-500">
+            <MessageSquareDashed className="w-8 h-8 text-zinc-600/80 stroke-[1.5]" />
+            <p className="text-xs font-medium">No messages yet</p>
+            <p className="text-[11px] text-zinc-600 max-w-[200px]">
+              Say hello or react with emojis to get the watch party started!
+            </p>
           </div>
         ) : (
           messages.map((msg) => {
-            const isSelf = msg.userId === currentUserId;
+            const isSelf =
+              msg.userId === currentUserId ||
+              (msg as any)?.user?.clerkUserId === currentUserId;
+
             return (
-              <div
+              <ChatBubble
                 key={msg.id}
-                className={`flex flex-col ${
-                  isSelf ? "items-end" : "items-start"
-                }`}
+                variant={isSelf ? "sent" : "received"}
               >
-                <div className="flex items-center gap-1.5 mb-0.5 px-1">
-                  <span className="text-[10px] font-semibold text-zinc-400">
-                    {msg.userName}
-                  </span>
-                  {msg.userRole === "HOST" && (
-                    <span className="text-[9px] font-bold text-amber-400 bg-amber-950/60 border border-amber-800/60 px-1 rounded">
-                      HOST
-                    </span>
-                  )}
-                  {msg.userRole === "MODERATOR" && (
-                    <span className="text-[9px] font-bold text-sky-400 bg-sky-950/60 border border-sky-800/60 px-1 rounded">
-                      MOD
-                    </span>
-                  )}
+                {!isSelf && (
+                  <ChatBubbleAvatar
+                    src={msg.userAvatar}
+                    fallback={msg.userName || "U"}
+                  />
+                )}
+
+                <div className="flex flex-col max-w-full">
+                  <ChatBubbleHeader
+                    senderName={msg.userName}
+                    role={msg.userRole}
+                    isSelf={isSelf}
+                  />
+
+                  <div className="flex flex-col">
+                    <ChatBubbleMessage
+                      variant={isSelf ? "sent" : "received"}
+                    >
+                      {msg.content}
+                    </ChatBubbleMessage>
+
+                    {msg.createdAt && (
+                      <ChatBubbleTimestamp
+                        timestamp={msg.createdAt}
+                        className={isSelf ? "text-right" : "text-left"}
+                      />
+                    )}
+                  </div>
                 </div>
-                <div
-                  className={`px-3 py-1.5 rounded-xl text-xs max-w-[85%] leading-relaxed ${
-                    isSelf
-                      ? "bg-zinc-100 text-zinc-950 font-medium"
-                      : "bg-zinc-800 text-zinc-200 border border-zinc-700/50"
-                  }`}
-                >
-                  {msg.content}
-                </div>
-              </div>
+              </ChatBubble>
             );
           })
         )}
-        <div ref={messagesEndRef} />
-      </div>
+      </ChatMessageList>
 
-      {/* Input */}
+      {/* Floating Scroll to Bottom pill if user scrolled up */}
+      {showScrollBottom && (
+        <ChatScrollToBottom
+          unreadCount={unreadCount}
+          onClick={() => scrollToBottom("smooth")}
+        />
+      )}
+
+      {/* Chat Input Bar */}
       {settings.allowChat ? (
         <form
           onSubmit={handleSend}
-          className="p-2.5 bg-zinc-950 border-t border-zinc-800 flex items-center gap-2"
+          className="p-2.5 bg-zinc-950 border-t border-zinc-800/80 flex items-center gap-2"
         >
-          <input
+          <Input
             type="text"
             value={messageText}
             disabled={slowModeCountdown > 0 && !isHostOrMod}
@@ -113,23 +196,29 @@ export function ChatTab({
             placeholder={
               slowModeCountdown > 0 && !isHostOrMod
                 ? `Slow mode active (${slowModeCountdown}s)...`
-                : "Send message..."
+                : "Type a message..."
             }
-            className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-zinc-700 text-white rounded-lg px-3 py-1.5 text-xs outline-none disabled:opacity-50"
+            maxLength={500}
+            className="flex-1 bg-zinc-900 border-zinc-800 text-xs text-white placeholder:text-zinc-500 rounded-xl px-3 py-2 h-9 focus-visible:ring-1 focus-visible:ring-zinc-600"
           />
-          <button
+          <Button
             type="submit"
-            disabled={slowModeCountdown > 0 && !isHostOrMod}
-            className="h-7 w-7 rounded-lg bg-white text-zinc-950 hover:bg-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+            size="sm"
+            disabled={
+              !messageText.trim() ||
+              (slowModeCountdown > 0 && !isHostOrMod)
+            }
+            className="h-9 w-9 p-0 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 transition-transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
           >
-            <Send className="w-3 h-3 ml-0.5" />
-          </button>
+            <Send className="w-3.5 h-3.5" />
+          </Button>
         </form>
       ) : (
-        <div className="p-2.5 bg-zinc-950 border-t border-zinc-800 text-center text-xs text-zinc-500 font-medium">
+        <div className="p-3 bg-zinc-950 border-t border-zinc-800/80 text-center text-xs text-zinc-500 font-medium select-none">
           Chat has been disabled by host.
         </div>
       )}
     </div>
   );
 }
+

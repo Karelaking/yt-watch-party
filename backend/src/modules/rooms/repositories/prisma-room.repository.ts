@@ -135,35 +135,58 @@ export class PrismaRoomRepository implements IRoomRepository {
   }
 
   public async listUserRooms(userId: string): Promise<RoomEntity[]> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    const clerkId = user?.clerkUserId;
+    let dbUser = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!dbUser && (userId.startsWith('user_') || !userId.includes('-'))) {
+      dbUser = await this.prisma.user.findUnique({ where: { clerkUserId: userId } });
+    }
 
+    const internalId = dbUser?.id || userId;
+    const clerkId = dbUser?.clerkUserId || (userId.startsWith('user_') ? userId : null);
+    const userIds = Array.from(new Set([internalId, clerkId, userId].filter(Boolean) as string[]));
+
+    // 1. Memberships
     const memberships = await this.prisma.roomMembership.findMany({
-      where: { userId, status: 'ACTIVE' },
+      where: {
+        userId: { in: userIds },
+        status: 'ACTIVE',
+      },
     });
-
     const memberRoomIds = memberships.map((m: any) => m.roomId);
 
-    const [ownedRooms, memberRooms] = await Promise.all([
-      this.prisma.room.findMany({
-        where: {
-          OR: [
-            { ownerId: userId, status: 'ACTIVE' },
-            ...(clerkId ? [{ ownerId: clerkId, status: 'ACTIVE' }] : []),
-          ],
-        },
-      }),
-      memberRoomIds.length > 0
-        ? Promise.all(
-            memberRoomIds.map(async (rid: string) => {
-              return this.prisma.room.findUnique({ where: { id: rid } });
-            })
-          )
-        : [],
-    ]);
+    // 2. Invitations (Accepted or Pending for this user or email)
+    const invitations = await this.prisma.roomInvitation.findMany({
+      where: {
+        OR: [
+          { inviteeId: { in: userIds } },
+          ...(dbUser?.email ? [{ inviteeEmail: dbUser.email }] : []),
+        ],
+        status: { in: ['ACCEPTED', 'PENDING'] },
+      },
+    });
+    const invitedRoomIds = invitations.map((inv: any) => inv.roomId);
+
+    // 3. Owned Rooms
+    const ownedRooms = await this.prisma.room.findMany({
+      where: {
+        ownerId: { in: userIds },
+        status: 'ACTIVE',
+      },
+    });
+
+    // 4. Combine all candidate room IDs
+    const targetRoomIds = Array.from(new Set([...memberRoomIds, ...invitedRoomIds]));
+
+    const memberRooms = targetRoomIds.length > 0
+      ? await this.prisma.room.findMany({
+          where: {
+            id: { in: targetRoomIds },
+            status: 'ACTIVE',
+          },
+        })
+      : [];
 
     const allRoomMap = new Map<string, any>();
-    for (const r of [...ownedRooms, ...(memberRooms || []).filter(Boolean)]) {
+    for (const r of [...ownedRooms, ...memberRooms]) {
       if (r && r.status === 'ACTIVE') {
         allRoomMap.set(r.id, r);
       }

@@ -546,7 +546,7 @@ export class WatchPartyGateway {
         }
       });
 
-      // Handle chat messages with MongoDB persistence and rate limiting
+      // Handle chat messages with MongoDB persistence, nickname resolution, and rate limiting
       socket.on('chat:send', async (data) => {
         try {
           const { roomId, text } = data;
@@ -554,6 +554,22 @@ export class WatchPartyGateway {
 
           const room = await this.resolveRoom(roomId);
           const canonicalRoomId = room ? room.id : roomId;
+
+          // Resolve member nickname and role
+          let membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.id);
+          if (!membership && user.clerkUserId) {
+            membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.clerkUserId);
+          }
+
+          const effectiveNickname =
+            membership?.nickname ||
+            data.userNickname ||
+            data.userName ||
+            user.displayName ||
+            (user.email ? user.email.split('@')[0] : 'Member');
+
+          const isHost = room ? (room.ownerId === user.id || room.ownerId === user.clerkUserId) : false;
+          const userRole = isHost ? 'HOST' : (membership?.role || 'PARTICIPANT');
 
           const savedMessage = await this.chatService.sendMessage(user.id, {
             roomId: canonicalRoomId,
@@ -564,11 +580,17 @@ export class WatchPartyGateway {
           const messagePayload = {
             id: savedMessage.id,
             senderId: user.id,
-            senderName: user.displayName || user.email || 'Anonymous',
+            senderName: effectiveNickname,
+            userNickname: effectiveNickname,
+            userRole,
+            userAvatar: user.avatarUrl || null,
             text: savedMessage.message,
             sentAt: savedMessage.createdAt.toISOString(),
           };
 
+          if (this.roomPubSubService) {
+            this.roomPubSubService.publish(canonicalRoomId, 'CHAT_MESSAGE' as any, messagePayload, user.id).catch(() => {});
+          }
           this.io.to(`room:${canonicalRoomId}`).emit('chat:message', messagePayload);
         } catch (err) {
           console.warn('[Socket chat:send warning]:', err instanceof Error ? err.message : err);

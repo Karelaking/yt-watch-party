@@ -112,37 +112,51 @@ export function DashboardContent(): React.JSX.Element {
       const isOwner =
         room.ownerId === user.id ||
         (room.owner as any)?.clerkUserId === user.id ||
-        (room.owner as any)?.id === user.id;
+        (room.owner as any)?.id === user.id ||
+        (room.owner as any)?.email === user.primaryEmailAddress?.emailAddress;
       const isMember = room.memberships?.some(
         (m) =>
           m.userId === user.id ||
           (m.user as any)?.clerkUserId === user.id ||
-          (m.user as any)?.id === user.id
+          (m.user as any)?.id === user.id ||
+          (m.user as any)?.email === user.primaryEmailAddress?.emailAddress
       );
-      return isOwner || isMember;
+      const isInviteOnlyOrPrivate =
+        room.visibility === "PRIVATE" ||
+        room.visibility === "UNLISTED" ||
+        (room.visibility as any) === "INVITE_ONLY";
+
+      return isOwner || isMember || isInviteOnlyOrPrivate;
     }
 
     return true;
   });
-
 
   const publicRoomsCount = rooms.filter(
     (r) => r.visibility?.toUpperCase() === "PUBLIC" || r.visibility === ("PUBLIC" as any)
   ).length;
 
   const myRoomsCount = user
-    ? rooms.filter(
-        (r) =>
+    ? rooms.filter((r) => {
+        const isOwner =
           r.ownerId === user.id ||
           (r.owner as any)?.clerkUserId === user.id ||
           (r.owner as any)?.id === user.id ||
-          r.memberships?.some(
-            (m) =>
-              m.userId === user.id ||
-              (m.user as any)?.clerkUserId === user.id ||
-              (m.user as any)?.id === user.id
-          )
-      ).length
+          (r.owner as any)?.email === user.primaryEmailAddress?.emailAddress;
+        const isMember = r.memberships?.some(
+          (m) =>
+            m.userId === user.id ||
+            (m.user as any)?.clerkUserId === user.id ||
+            (m.user as any)?.id === user.id ||
+            (m.user as any)?.email === user.primaryEmailAddress?.emailAddress
+        );
+        const isInviteOnlyOrPrivate =
+          r.visibility === "PRIVATE" ||
+          r.visibility === "UNLISTED" ||
+          (r.visibility as any) === "INVITE_ONLY";
+
+        return isOwner || isMember || isInviteOnlyOrPrivate;
+      }).length
     : 0;
 
   const totalMembers = rooms.reduce((acc, r) => acc + (r.memberships?.length || 0), 0);
