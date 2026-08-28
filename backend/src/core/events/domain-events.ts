@@ -48,6 +48,12 @@ export class RoomCreatedEvent extends BaseDomainEvent<{ roomId: string; code: st
   }
 }
 
+export class RoomEndedEvent extends BaseDomainEvent<{ roomId: string }> {
+  constructor(payload: { roomId: string }) {
+    super(DomainEventType.ROOM_ENDED, payload);
+  }
+}
+
 export class MemberJoinedEvent extends BaseDomainEvent<{ roomId: string; userId: string; role: string }> {
   constructor(payload: { roomId: string; userId: string; role: string }) {
     super(DomainEventType.MEMBER_JOINED, payload);

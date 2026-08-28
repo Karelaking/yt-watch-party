@@ -4,7 +4,7 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { env } from '../config/env.config.js';
 import { container } from '../core/di/container.js';
 import { TYPES } from '../core/di/identifiers.js';
-import { createRedisClient } from '../infrastructure/database/redis.js';
+import { getRedis } from '../infrastructure/database/redis.js';
 import type { IAuthService } from '../modules/auth/interfaces/auth.service.interface.js';
 import type {
   ServerToClientEvents,
@@ -28,9 +28,12 @@ export function createSocketServer(
     if (!origin) return true;
     const cleanOrigin = origin.replace(/\/$/, '');
     if (explicitOrigins.includes(cleanOrigin) || explicitOrigins.includes('*')) return true;
-    if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin)) return true;
+    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin)) return true;
     if (/^https?:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(cleanOrigin)) return true;
     if (/^https:\/\/([a-zA-Z0-9_-]+\.)?vercel\.app$/.test(cleanOrigin)) return true;
+    if (/^https:\/\/([a-zA-Z0-9_-]+\.)?railway\.app$/.test(cleanOrigin)) return true;
+    if (/^https:\/\/([a-zA-Z0-9_-]+\.)?up\.railway\.app$/.test(cleanOrigin)) return true;
+    if (env.NODE_ENV !== 'production') return true;
     return false;
   };
 
@@ -50,7 +53,7 @@ export function createSocketServer(
       },
       pingTimeout: 20000,
       pingInterval: 10000,
-      maxHttpBufferSize: 1e6, // 1MB payload ceiling
+      maxHttpBufferSize: 1e6, // 1MB payload buffer limit
       perMessageDeflate: {
         threshold: 1024, // Compress packets larger than 1KB
         zlibDeflateOptions: {
@@ -62,17 +65,17 @@ export function createSocketServer(
 
   // Setup Redis Adapter for multi-instance horizontal scaling
   try {
-    const pubClient = createRedisClient();
+    const pubClient = getRedis();
     const subClient = pubClient.duplicate();
-    pubClient.on('error', (err) => {
+    pubClient.on('error', (err: unknown) => {
       console.warn('[Socket.IO Redis Pub Client Error]:', err instanceof Error ? err.message : err);
     });
-    subClient.on('error', (err) => {
+    subClient.on('error', (err: unknown) => {
       console.warn('[Socket.IO Redis Sub Client Error]:', err instanceof Error ? err.message : err);
     });
     io.adapter(createAdapter(pubClient, subClient));
     console.log('📡 Socket.IO Redis adapter attached for horizontal scaling');
-  } catch (err) {
+  } catch (err: unknown) {
     console.warn('[Socket.IO Redis Adapter Warning]: Falling back to in-memory adapter:', err);
   }
 

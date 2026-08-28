@@ -138,7 +138,9 @@ export function registerDependencies(): void {
         c.resolve(TYPES.RoomSettingsRepository),
         c.resolve(TYPES.EventDispatcher),
         c.resolve(TYPES.MembershipRepository),
-        c.resolve(TYPES.BanRepository)
+        c.resolve(TYPES.BanRepository),
+        c.resolve(TYPES.MessageRepository),
+        c.resolve(TYPES.RedisClient)
       )
   );
 

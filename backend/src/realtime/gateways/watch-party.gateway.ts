@@ -135,6 +135,16 @@ export class WatchPartyGateway {
         }
       }
     });
+
+    this.eventDispatcher.subscribe(DomainEventType.ROOM_ENDED, (event) => {
+      const payload = event.payload as { roomId: string };
+      this.roomCache.delete(payload.roomId);
+      this.settingsCache.delete(payload.roomId);
+      this.banCache.delete(payload.roomId);
+      this.io.to(`room:${payload.roomId}`).emit('room:member_left', {
+        userId: 'ROOM_ENDED',
+      });
+    });
   }
 
   private async resolveRoom(roomIdOrCode: string) {

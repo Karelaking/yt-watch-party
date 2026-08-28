@@ -36,4 +36,5 @@ export interface IMessageRepository extends IRepository<MessageEntity> {
   listByRoom(roomId: string, options?: ListMessagesOptions): Promise<{ messages: MessageEntity[]; nextCursor: string | null }>;
   edit(id: string, senderId: string, newMessage: string): Promise<MessageEntity | null>;
   softDelete(id: string, senderId: string): Promise<boolean>;
+  deleteByRoom(roomId: string): Promise<number>;
 }

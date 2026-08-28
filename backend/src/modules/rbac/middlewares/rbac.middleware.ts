@@ -88,7 +88,7 @@ export function requireRoomPermission(permission: Permission) {
 
       // If user is the room owner but doesn't have a membership record yet, treat them as HOST
       let userRole: RoomRole;
-      if (room.ownerId === req.user.id) {
+      if (room.ownerId === req.user.id || room.ownerId === req.user.clerkUserId) {
         userRole = 'HOST';
       } else if (membership && membership.status === 'ACTIVE') {
         userRole = membership.role;
@@ -153,7 +153,8 @@ export function requireRoomRole(allowedRoles: RoomRole[]) {
         throw new NotFoundError('Room not found');
       }
 
-      if (room.ownerId === req.user.id && allowedRoles.includes('HOST')) {
+      const isOwner = room.ownerId === req.user.id || room.ownerId === req.user.clerkUserId;
+      if (isOwner && allowedRoles.includes('HOST')) {
         req.room = room;
         return next();
       }

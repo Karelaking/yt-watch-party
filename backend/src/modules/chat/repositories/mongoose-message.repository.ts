@@ -100,4 +100,9 @@ export class MongooseMessageRepository implements IMessageRepository {
 
     return result.modifiedCount > 0;
   }
+
+  public async deleteByRoom(roomId: string): Promise<number> {
+    const result = await Message.deleteMany({ roomId }).exec();
+    return result.deletedCount || 0;
+  }
 }

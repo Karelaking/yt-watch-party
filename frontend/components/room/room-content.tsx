@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth, useUser } from "@clerk/nextjs";
 import type {
   Room,
@@ -37,6 +38,7 @@ interface RoomContentProps {
 }
 
 export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
+  const router = useRouter();
   const { user } = useUser();
   const { getToken } = useAuth();
   const { socket, isConnected } = useSocket();
@@ -893,6 +895,16 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
     }
   };
 
+  const handleDeleteRoom = async () => {
+    try {
+      const token = await getToken();
+      await apiClient.delete(`/rooms/${room.id}`, token);
+      router.push("/dashboard");
+    } catch (err: any) {
+      alert(err?.message || "Failed to delete room");
+    }
+  };
+
   const activeMedia =
     room.media.find((m) => m.id === room.playbackState.mediaId) ||
     room.playbackState.media ||
@@ -960,6 +972,7 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
         onClose={() => setIsSettingsOpen(false)}
         onUpdateRoom={handleUpdateRoomMeta}
         onUpdateSettings={handleUpdateSettings}
+        onDeleteRoom={handleDeleteRoom}
       />
 
       {/* Invite Modal */}

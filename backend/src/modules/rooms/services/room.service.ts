@@ -6,8 +6,11 @@ import { NotFoundError, ConflictError } from '../../../core/errors/index.js';
 import type { IService } from '../../../core/interfaces/index.js';
 
 import type { IMembershipRepository, IBanRepository } from '../../memberships/repositories/membership.repository.interface.js';
+import type { IMessageRepository } from '../../chat/repositories/message.repository.interface.js';
+import type { Redis } from 'ioredis';
+import { RedisKeys } from '../../../infrastructure/redis/redis-keys.js';
+import { RoomEndedEvent, MemberJoinedEvent } from '../../../core/events/index.js';
 import type { RoomRole } from '../../rbac/permissions.js';
-import { MemberJoinedEvent } from '../../../core/events/index.js';
 
 export interface IRoomService extends IService {
   createRoom(userId: string, data: CreateRoomDto): Promise<{ room: RoomEntity; settings: RoomSettingsEntity }>;
@@ -26,7 +29,9 @@ export class RoomService implements IRoomService {
     private readonly settingsRepository: IRoomSettingsRepository,
     private readonly eventDispatcher: IEventDispatcher,
     private readonly membershipRepository?: IMembershipRepository,
-    private readonly banRepository?: IBanRepository
+    private readonly banRepository?: IBanRepository,
+    private readonly messageRepository?: IMessageRepository,
+    private readonly redisClient?: Redis
   ) {}
 
   private generateRoomCode(): string {
@@ -207,6 +212,45 @@ export class RoomService implements IRoomService {
   }
 
   public async endRoom(roomId: string): Promise<void> {
+    const room = await this.roomRepository.findById(roomId);
+    if (!room) throw new NotFoundError('Room not found');
+
+    // 1. Delete all PostgreSQL records (Room and all cascaded children)
     await this.roomRepository.delete(roomId);
+
+    // 2. Delete all MongoDB chat messages
+    if (this.messageRepository) {
+      try {
+        await this.messageRepository.deleteByRoom(roomId);
+      } catch (err) {
+        console.warn(`[RoomService] Failed to clean MongoDB messages for room ${roomId}:`, err);
+      }
+    }
+
+    // 3. Purge all Redis keys for this room
+    if (this.redisClient) {
+      try {
+        const roomKeys = [
+          RedisKeys.roomPresence(roomId),
+          RedisKeys.roomConnections(roomId),
+          RedisKeys.roomPlayback(roomId),
+          RedisKeys.roomState(roomId),
+          RedisKeys.roomTyping(roomId),
+          RedisKeys.roomViewers(roomId),
+          RedisKeys.roomMeta(roomId),
+          RedisKeys.roomSettings(roomId),
+          RedisKeys.roomBans(roomId),
+          RedisKeys.lockPlayback(roomId),
+          RedisKeys.lockPlaylist(roomId),
+          RedisKeys.pubsubRoom(roomId),
+        ];
+        await this.redisClient.del(...roomKeys);
+      } catch (err) {
+        console.warn(`[RoomService] Failed to clean Redis keys for room ${roomId}:`, err);
+      }
+    }
+
+    // 4. Dispatch domain event to notify socket clients
+    this.eventDispatcher.publish(new RoomEndedEvent({ roomId }));
   }
 }

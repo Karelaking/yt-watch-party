@@ -2,16 +2,27 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useUser, useAuth } from "@clerk/nextjs";
+import { apiClient } from "@/lib/api-client";
 import { Room } from "@/lib/contract-types";
-import { Users, Play, Copy, Check, Lock, Globe, ArrowUpRight } from "lucide-react";
+import { Users, Play, Copy, Check, Lock, Globe, ArrowUpRight, Trash2, Loader2 } from "lucide-react";
 
 interface RoomCardProps {
   room: Room;
 }
 
 export function RoomCard({ room }: RoomCardProps): React.JSX.Element {
+  const { user } = useUser();
+  const { getToken } = useAuth();
   const [copied, setCopied] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
   const currentMedia = room.media[0] || null;
+
+  const isOwner =
+    user?.id &&
+    (room.ownerId === user.id ||
+      (room.owner as any)?.clerkUserId === user.id ||
+      (room.owner as any)?.id === user.id);
 
   const handleCopyCode = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -19,6 +30,26 @@ export function RoomCard({ room }: RoomCardProps): React.JSX.Element {
     navigator.clipboard.writeText(`${window.location.origin}/room/${room.id}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDeleteRoom = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!confirm(`Are you sure you want to delete "${room.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const token = await getToken();
+      await apiClient.delete(`/rooms/${room.id}`, token);
+      window.dispatchEvent(new Event("rooms_updated"));
+    } catch (err: any) {
+      alert(err?.message || "Failed to delete room");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -86,6 +117,21 @@ export function RoomCard({ room }: RoomCardProps): React.JSX.Element {
           </div>
 
           <div className="flex items-center gap-1.5">
+            {isOwner && (
+              <button
+                onClick={handleDeleteRoom}
+                disabled={isDeleting}
+                title="Delete Room"
+                className="p-1.5 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5" />
+                )}
+              </button>
+            )}
+
             <button
               onClick={handleCopyCode}
               title="Copy invite link"

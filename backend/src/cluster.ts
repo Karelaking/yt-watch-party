@@ -2,7 +2,9 @@ import cluster from 'node:cluster';
 import os from 'node:os';
 
 if (cluster.isPrimary) {
-  const numCPUs = Math.max(1, Math.min(os.cpus().length, 8));
+  const numCPUs = process.env.WEB_CONCURRENCY
+    ? parseInt(process.env.WEB_CONCURRENCY, 10)
+    : Math.max(1, Math.min(os.cpus().length, 2));
   console.log(`⚡ [Cluster Primary] Spawning ${numCPUs} Watch Party worker instances (PID: ${process.pid})...`);
 
   for (let i = 0; i < numCPUs; i++) {

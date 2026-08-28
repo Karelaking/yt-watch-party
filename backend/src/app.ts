@@ -44,9 +44,12 @@ export function createApp(): Express {
     if (!origin) return true;
     const cleanOrigin = origin.replace(/\/$/, '');
     if (explicitOrigins.includes(cleanOrigin) || explicitOrigins.includes('*')) return true;
-    if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin)) return true;
+    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(cleanOrigin)) return true;
     if (/^https?:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(cleanOrigin)) return true;
     if (/^https:\/\/([a-zA-Z0-9_-]+\.)?vercel\.app$/.test(cleanOrigin)) return true;
+    if (/^https:\/\/([a-zA-Z0-9_-]+\.)?railway\.app$/.test(cleanOrigin)) return true;
+    if (/^https:\/\/([a-zA-Z0-9_-]+\.)?up\.railway\.app$/.test(cleanOrigin)) return true;
+    if (env.NODE_ENV !== 'production') return true;
     return false;
   };
 

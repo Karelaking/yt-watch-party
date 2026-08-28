@@ -14,6 +14,7 @@ interface RoomSettingsModalProps {
   onClose: () => void;
   onUpdateRoom: (updates: Partial<Room>) => void;
   onUpdateSettings: (settingsUpdates: Partial<RoomSettings>) => void;
+  onDeleteRoom?: () => void;
 }
 
 export function RoomSettingsModal({
@@ -22,6 +23,7 @@ export function RoomSettingsModal({
   onClose,
   onUpdateRoom,
   onUpdateSettings,
+  onDeleteRoom,
 }: RoomSettingsModalProps): React.JSX.Element | null {
   const [activeTab, setActiveTab] = React.useState<
     "GENERAL" | "PERMISSIONS" | "CHAT" | "LIFECYCLE"
@@ -71,8 +73,12 @@ export function RoomSettingsModal({
   };
 
   const handleEndRoom = () => {
-    if (confirm("Are you sure you want to end this watch room for all viewers?")) {
-      onUpdateRoom({ status: "ENDED" });
+    if (confirm("Are you sure you want to end and delete this watch room for all viewers?")) {
+      if (onDeleteRoom) {
+        onDeleteRoom();
+      } else {
+        onUpdateRoom({ status: "ENDED" });
+      }
       onClose();
     }
   };

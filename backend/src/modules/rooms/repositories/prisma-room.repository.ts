@@ -135,6 +135,9 @@ export class PrismaRoomRepository implements IRoomRepository {
   }
 
   public async listUserRooms(userId: string): Promise<RoomEntity[]> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const clerkId = user?.clerkUserId;
+
     const memberships = await this.prisma.roomMembership.findMany({
       where: { userId, status: 'ACTIVE' },
     });
@@ -143,7 +146,12 @@ export class PrismaRoomRepository implements IRoomRepository {
 
     const [ownedRooms, memberRooms] = await Promise.all([
       this.prisma.room.findMany({
-        where: { ownerId: userId, status: 'ACTIVE' },
+        where: {
+          OR: [
+            { ownerId: userId, status: 'ACTIVE' },
+            ...(clerkId ? [{ ownerId: clerkId, status: 'ACTIVE' }] : []),
+          ],
+        },
       }),
       memberRoomIds.length > 0
         ? Promise.all(
@@ -272,14 +280,50 @@ export class PrismaRoomRepository implements IRoomRepository {
   }
 
   public async delete(id: string): Promise<boolean> {
-    const result = await this.prisma.room.update({
-      where: { id },
-      data: {
-        status: 'ENDED',
-        endedAt: new Date(),
-      },
-    });
-    return !!result;
+    try {
+      // 1. Delete associated playlist items first, then playlists
+      const playlists = await this.prisma.playlist.findMany({ where: { roomId: id } });
+      for (const pl of playlists) {
+        await this.prisma.playlistItem.deleteMany({ where: { playlistId: pl.id } });
+      }
+      await this.prisma.playlist.deleteMany({ where: { roomId: id } });
+
+      // 2. Cascade delete all relational dependencies in PostgreSQL
+      await Promise.allSettled([
+        this.prisma.media.deleteMany({ where: { roomId: id } }),
+        this.prisma.playbackState.deleteMany({ where: { roomId: id } }),
+        this.prisma.playbackHistory.deleteMany({ where: { roomId: id } }),
+        this.prisma.roomSettings.deleteMany({ where: { roomId: id } }),
+        this.prisma.roomMembership.deleteMany({ where: { roomId: id } }),
+        this.prisma.roomBan.deleteMany({ where: { roomId: id } }),
+        this.prisma.roomInvitation.deleteMany({ where: { roomId: id } }),
+        this.prisma.watchSession.deleteMany({ where: { roomId: id } }),
+        this.prisma.screenShareSession.deleteMany({ where: { roomId: id } }),
+        this.prisma.roomEvent.deleteMany({ where: { roomId: id } }),
+      ]);
+
+      // 3. Hard delete room from PostgreSQL
+      await this.prisma.room.delete({
+        where: { id },
+      });
+
+      return true;
+    } catch (err) {
+      console.error('[PrismaRoomRepository.delete Error]:', err);
+      // Soft-delete fallback
+      try {
+        await this.prisma.room.update({
+          where: { id },
+          data: {
+            status: 'ENDED',
+            endedAt: new Date(),
+          },
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    }
   }
 }
 

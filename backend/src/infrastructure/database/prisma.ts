@@ -271,6 +271,20 @@ function createModelDelegate(modelName: string, dbClient: any = db) {
       return existing ?? true;
     },
 
+    async deleteMany(args?: { where?: any }) {
+      const ormModel = getOrmModel();
+      if (!ormModel) return { count: 0 };
+      const flattened = args?.where ? flattenWhere(args.where) : {};
+      try {
+        const deleted = await ormModel.where(flattened).delete();
+        const count = Array.isArray(deleted) ? deleted.length : deleted ? 1 : 0;
+        return { count };
+      } catch (err) {
+        console.warn(`[Prisma deleteMany warning on ${modelName}]:`, err);
+        return { count: 0 };
+      }
+    },
+
     async count(args?: { where?: any }) {
       const ormModel = getOrmModel();
       if (!ormModel) return 0;
