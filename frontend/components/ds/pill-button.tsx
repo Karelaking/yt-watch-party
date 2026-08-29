@@ -4,8 +4,6 @@ import * as React from "react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import gsap from "gsap";
-import confetti from "canvas-confetti";
-
 export interface PillButtonProps extends ButtonProps {
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   magnetic?: boolean;
@@ -21,7 +19,7 @@ export const PillButton = React.forwardRef<HTMLButtonElement, PillButtonProps>(
       className,
       children,
       variant = "default",
-      magnetic = true,
+      magnetic = false,
       pulse = false,
       confettiOnClick = false,
       icon,
@@ -32,6 +30,7 @@ export const PillButton = React.forwardRef<HTMLButtonElement, PillButtonProps>(
     ref
   ): React.JSX.Element => {
     const buttonRef = React.useRef<HTMLButtonElement | null>(null);
+    const rectRef = React.useRef<DOMRect | null>(null);
 
     // Merge internal ref with forwarded ref
     const handleRef = (node: HTMLButtonElement | null) => {
@@ -43,50 +42,60 @@ export const PillButton = React.forwardRef<HTMLButtonElement, PillButtonProps>(
       }
     };
 
-    // Magnetic cursor tracking
+    const handleMouseEnter = () => {
+      if (!magnetic || !buttonRef.current) return;
+      rectRef.current = buttonRef.current.getBoundingClientRect();
+    };
+
+    // Magnetic cursor tracking (only when magnetic is explicitly true)
     const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (!magnetic || !buttonRef.current) return;
-      const rect = buttonRef.current.getBoundingClientRect();
+      if (!rectRef.current) {
+        rectRef.current = buttonRef.current.getBoundingClientRect();
+      }
+      const rect = rectRef.current;
       const x = e.clientX - rect.left - rect.width / 2;
       const y = e.clientY - rect.top - rect.height / 2;
 
       gsap.to(buttonRef.current, {
-        x: x * 0.22,
-        y: y * 0.22,
-        duration: 0.3,
+        x: x * 0.2,
+        y: y * 0.2,
+        duration: 0.25,
         ease: "power2.out",
+        overwrite: "auto",
       });
     };
 
     const handleMouseLeave = () => {
+      rectRef.current = null;
       if (!magnetic || !buttonRef.current) return;
       gsap.to(buttonRef.current, {
         x: 0,
         y: 0,
-        duration: 0.5,
-        ease: "elastic.out(1, 0.4)",
+        duration: 0.4,
+        ease: "power2.out",
+        overwrite: "auto",
       });
     };
 
-    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
       if (confettiOnClick) {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = (rect.left + rect.width / 2) / window.innerWidth;
-        const y = (rect.top + rect.height / 2) / window.innerHeight;
+        try {
+          const confettiModule = await import("canvas-confetti");
+          const confetti = confettiModule.default || confettiModule;
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = (rect.left + rect.width / 2) / window.innerWidth;
+          const y = (rect.top + rect.height / 2) / window.innerHeight;
 
-        confetti({
-          particleCount: 40,
-          spread: 60,
-          origin: { x, y },
-          colors: ["#000000", "#71717a", "#ef4444", "#3b82f6"],
-        });
-      }
-
-      // Micro bounce effect on click
-      if (buttonRef.current) {
-        gsap.timeline()
-          .to(buttonRef.current, { scale: 0.95, duration: 0.1, ease: "power1.inOut" })
-          .to(buttonRef.current, { scale: 1, duration: 0.2, ease: "back.out(2)" });
+          confetti({
+            particleCount: 35,
+            spread: 55,
+            origin: { x, y },
+            colors: ["#000000", "#71717a", "#ef4444", "#3b82f6"],
+          });
+        } catch {
+          // Ignore confetti error gracefully
+        }
       }
 
       onClick?.(e);
@@ -109,6 +118,7 @@ export const PillButton = React.forwardRef<HTMLButtonElement, PillButtonProps>(
           "font-medium text-sm gap-2 cursor-pointer",
           className
         )}
+        onMouseEnter={handleMouseEnter}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}

@@ -1,14 +1,7 @@
 "use client";
 
 import * as React from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
 import { cn } from "@/lib/utils";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
 
 export interface AnimatedCounterProps extends React.HTMLAttributes<HTMLDivElement> {
   value: number;
@@ -28,40 +21,53 @@ export function AnimatedCounter({
   decimals = 0,
   label,
   sublabel,
-  duration = 2,
+  duration = 1.5,
   ...props
 }: AnimatedCounterProps): React.JSX.Element {
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const countRef = React.useRef<HTMLSpanElement>(null);
+  const [displayValue, setDisplayValue] = React.useState("0");
 
-  useGSAP(
-    () => {
-      if (!countRef.current || !containerRef.current) return;
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+    if (typeof window === "undefined" || !("IntersectionObserver" in window)) {
+      setDisplayValue(decimals > 0 ? value.toFixed(decimals) : Math.floor(value).toLocaleString());
+      return;
+    }
 
-      const obj = { val: 0 };
+    let startTime: number | null = null;
+    let animationFrame: number | null = null;
 
-      gsap.to(obj, {
-        val: value,
-        duration,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 85%",
-          toggleActions: "play none none none",
-          once: true,
-        },
-        onUpdate: () => {
-          if (countRef.current) {
-            countRef.current.textContent =
-              decimals > 0
-                ? obj.val.toFixed(decimals)
-                : Math.floor(obj.val).toLocaleString();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            observer.disconnect();
+
+            const step = (timestamp: number) => {
+              if (!startTime) startTime = timestamp;
+              const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
+              // easeOutExpo
+              const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+              const currentVal = eased * value;
+              setDisplayValue(decimals > 0 ? currentVal.toFixed(decimals) : Math.floor(currentVal).toLocaleString());
+
+              if (progress < 1) {
+                animationFrame = requestAnimationFrame(step);
+              }
+            };
+            animationFrame = requestAnimationFrame(step);
           }
-        },
-      });
-    },
-    { scope: containerRef }
-  );
+        });
+      },
+      { rootMargin: "50px 0px" }
+    );
+
+    observer.observe(containerRef.current);
+    return () => {
+      observer.disconnect();
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+    };
+  }, [value, decimals, duration]);
 
   return (
     <div
@@ -71,7 +77,7 @@ export function AnimatedCounter({
     >
       <div className="text-4xl sm:text-5xl font-extrabold tracking-tight text-zinc-900 dark:text-white flex items-center justify-center">
         {prefix && <span>{prefix}</span>}
-        <span ref={countRef}>0</span>
+        <span>{displayValue}</span>
         {suffix && <span>{suffix}</span>}
       </div>
       <div className="mt-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">{label}</div>

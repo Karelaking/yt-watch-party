@@ -22,39 +22,57 @@ export function FloatingCard({
   ...props
 }: FloatingCardProps): React.JSX.Element {
   const cardRef = React.useRef<HTMLDivElement>(null);
+  const rectRef = React.useRef<DOMRect | null>(null);
+  const rafRef = React.useRef<number | null>(null);
+
+  const handleMouseEnter = () => {
+    if (!enableTilt || !cardRef.current) return;
+    rectRef.current = cardRef.current.getBoundingClientRect();
+  };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!enableTilt || !cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
+    if (!rectRef.current) {
+      rectRef.current = cardRef.current.getBoundingClientRect();
+    }
+    const rect = rectRef.current;
+    if (!rect) return;
+
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
 
-    const rotateX = ((y - centerY) / centerY) * -10;
-    const rotateY = ((x - centerX) / centerX) * 10;
+    const rotateX = ((y - centerY) / (centerY || 1)) * -8;
+    const rotateY = ((x - centerX) / (centerX || 1)) * 8;
 
-    gsap.to(cardRef.current, {
-      rotateX: rotateX,
-      rotateY: rotateY,
-      transformPerspective: 1000,
-      scale: 1.03,
-      boxShadow: "0 20px 35px -10px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.2)",
-      duration: 0.3,
-      ease: "power2.out",
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      if (!cardRef.current) return;
+      gsap.to(cardRef.current, {
+        rotateX,
+        rotateY,
+        transformPerspective: 1000,
+        scale: 1.02,
+        duration: 0.25,
+        ease: "power2.out",
+        overwrite: "auto",
+      });
     });
   };
 
   const handleMouseLeave = () => {
+    rectRef.current = null;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
     if (!enableTilt || !cardRef.current) return;
     gsap.to(cardRef.current, {
       rotateX: 0,
       rotateY: 0,
       scale: 1,
-      boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.1)",
-      duration: 0.5,
+      duration: 0.4,
       ease: "power2.out",
+      overwrite: "auto",
     });
   };
 
@@ -70,6 +88,7 @@ export function FloatingCard({
         transform: `rotate(${rotate}deg)`,
         ...style,
       }}
+      onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       {...props}

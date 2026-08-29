@@ -25,23 +25,14 @@ export function HighlightHeading({
 
       const animTargets = containerRef.current.querySelectorAll(".anim-chunk, .anim-word");
       if (animTargets.length > 0) {
-        gsap.fromTo(
-          animTargets,
-          {
-            opacity: 0,
-            y: 18,
-            scale: 0.98,
-          },
-          {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.6,
-            stagger: 0.08,
-            ease: "power3.out",
-            delay: 0.08,
-          }
-        );
+        gsap.from(animTargets, {
+          opacity: 0.2,
+          y: 12,
+          duration: 0.5,
+          stagger: 0.06,
+          ease: "power2.out",
+          delay: 0.05,
+        });
       }
     },
     { scope: containerRef }

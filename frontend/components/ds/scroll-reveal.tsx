@@ -1,14 +1,7 @@
 "use client";
 
 import * as React from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
 import { cn } from "@/lib/utils";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
 
 export interface ScrollRevealProps extends React.HTMLAttributes<HTMLDivElement> {
   direction?: "up" | "down" | "left" | "right" | "none";
@@ -23,70 +16,68 @@ export function ScrollReveal({
   children,
   className,
   direction = "up",
-  distance = 36,
-  duration = 0.8,
+  distance = 24,
+  duration = 0.5,
   delay = 0,
-  stagger = 0.08,
-  threshold = "top 85%",
+  style,
   ...props
 }: ScrollRevealProps): React.JSX.Element {
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = React.useState(false);
 
-  useGSAP(
-    () => {
-      if (!containerRef.current) return;
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+    if (typeof window === "undefined" || !("IntersectionObserver" in window)) {
+      setIsVisible(true);
+      return;
+    }
 
-      const getInitialOffsets = () => {
-        switch (direction) {
-          case "up":
-            return { y: distance, x: 0 };
-          case "down":
-            return { y: -distance, x: 0 };
-          case "left":
-            return { x: distance, y: 0 };
-          case "right":
-            return { x: -distance, y: 0 };
-          case "none":
-          default:
-            return { x: 0, y: 0 };
-        }
-      };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { rootMargin: "60px 0px", threshold: 0.1 }
+    );
 
-      const offsets = getInitialOffsets();
-      const elements = containerRef.current.children.length > 1
-        ? containerRef.current.children
-        : containerRef.current;
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
-      gsap.fromTo(
-        elements,
-        {
-          opacity: 0,
-          ...offsets,
-          scale: direction === "none" ? 0.95 : 1,
-        },
-        {
-          opacity: 1,
-          x: 0,
-          y: 0,
-          scale: 1,
-          duration,
-          delay,
-          stagger,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: threshold,
-            toggleActions: "play none none none",
-            once: true,
-          },
-        }
-      );
-    },
-    { scope: containerRef }
-  );
+  const getTransform = () => {
+    if (isVisible) return "none";
+    switch (direction) {
+      case "up":
+        return `translate3d(0, ${distance}px, 0)`;
+      case "down":
+        return `translate3d(0, -${distance}px, 0)`;
+      case "left":
+        return `translate3d(${distance}px, 0, 0)`;
+      case "right":
+        return `translate3d(-${distance}px, 0, 0)`;
+      case "none":
+      default:
+        return "none";
+    }
+  };
 
   return (
-    <div ref={containerRef} className={cn("w-full", className)} {...props}>
+    <div
+      ref={containerRef}
+      className={cn("w-full transition-all ease-out will-change-transform", className)}
+      style={{
+        opacity: isVisible ? 1 : 0.15,
+        transform: getTransform(),
+        transitionDuration: `${duration}s`,
+        transitionDelay: `${delay}s`,
+        ...style,
+      }}
+      {...props}
+    >
       {children}
     </div>
   );

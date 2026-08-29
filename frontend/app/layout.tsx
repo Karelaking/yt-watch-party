@@ -1,21 +1,31 @@
 import * as React from "react";
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProviderWrapper } from "@/components/providers/clerk-provider-wrapper";
 import { GsapProvider } from "@/components/providers/gsap-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { JsonLdSchema } from "@/components/seo/json-ld";
 import "./globals.css";
+
+const AppCommandMenu = dynamic(
+  () => import("@/components/app-command-menu").then((mod) => mod.AppCommandMenu)
+);
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
-
-import { JsonLdSchema } from "@/components/seo/json-ld";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_APP_URL || "https://watchparty-yt.vercel.app";
@@ -83,10 +93,6 @@ export const metadata: Metadata = {
   },
   category: "entertainment",
 };
-
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
-import { AppCommandMenu } from "@/components/app-command-menu";
 
 export default function RootLayout({
   children,

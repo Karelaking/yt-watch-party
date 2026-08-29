@@ -1,33 +1,62 @@
 import * as React from "react";
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import dynamic from "next/dynamic";
 import { GlassNav } from "@/components/ds/glass-nav";
+import { HeroSection } from "@/components/landing/hero-section";
 import { ScrollReveal } from "@/components/ds/scroll-reveal";
-import {
-  HeroSection,
-  IntegrationOrbit,
-  InteractiveDemo,
-  FeaturesGrid,
-  HowItWorks,
-  StatsCounters,
-  Testimonials,
-  FaqAccordion,
-  FinalCta,
-  Footer,
-} from "@/components/landing";
 
-export default async function Home(): Promise<React.JSX.Element> {
-  const { userId } = await auth();
-  if (userId) {
-    redirect("/dashboard");
-  }
+// Dynamically import below-the-fold sections for instant initial page paint
+const IntegrationOrbit = dynamic(
+  () => import("@/components/landing/integration-orbit").then((m) => m.IntegrationOrbit),
+  { ssr: true }
+);
 
+const InteractiveDemo = dynamic(
+  () => import("@/components/landing/interactive-demo").then((m) => m.InteractiveDemo),
+  { ssr: true }
+);
+
+const FeaturesGrid = dynamic(
+  () => import("@/components/landing/features-grid").then((m) => m.FeaturesGrid),
+  { ssr: true }
+);
+
+const HowItWorks = dynamic(
+  () => import("@/components/landing/how-it-works").then((m) => m.HowItWorks),
+  { ssr: true }
+);
+
+const StatsCounters = dynamic(
+  () => import("@/components/landing/stats-counters").then((m) => m.StatsCounters),
+  { ssr: true }
+);
+
+const Testimonials = dynamic(
+  () => import("@/components/landing/testimonials").then((m) => m.Testimonials),
+  { ssr: true }
+);
+
+const FaqAccordion = dynamic(
+  () => import("@/components/landing/faq-accordion").then((m) => m.FaqAccordion),
+  { ssr: true }
+);
+
+const FinalCta = dynamic(
+  () => import("@/components/landing/final-cta").then((m) => m.FinalCta),
+  { ssr: true }
+);
+
+const Footer = dynamic(
+  () => import("@/components/landing/footer").then((m) => m.Footer),
+  { ssr: true }
+);
+
+export default function Home(): React.JSX.Element {
   return (
     <div className="flex flex-col min-h-screen selection:bg-zinc-900 selection:text-white">
       {/* Top Floating Glass Capsule Navigation */}
       <GlassNav />
 
-      {/* Hero Section */}
+      {/* Hero Section - Above the fold, rendered with priority */}
       <HeroSection />
 
       {/* Integration / Orbit Section */}
@@ -78,3 +107,4 @@ export default async function Home(): Promise<React.JSX.Element> {
     </div>
   );
 }
+

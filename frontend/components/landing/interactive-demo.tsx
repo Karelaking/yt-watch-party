@@ -5,7 +5,6 @@ import { PillButton } from "@/components/ds/pill-button";
 import { PillBadge } from "@/components/ds/pill-badge";
 import { YouTubeIcon } from "@/components/ds/brand-icons";
 import { Copy, Check, Sparkles, Users, Play, Shield, Radio, Loader2 } from "lucide-react";
-import confetti from "canvas-confetti";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -98,12 +97,18 @@ export function InteractiveDemo(): React.JSX.Element {
     setCreated(true);
     setIsPending(false);
 
-    confetti({
-      particleCount: 50,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ["#18181b", "#ef4444", "#3b82f6", "#10b981"],
-    });
+    try {
+      const confettiModule = await import("canvas-confetti");
+      const confetti = confettiModule.default || confettiModule;
+      confetti({
+        particleCount: 40,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ["#18181b", "#ef4444", "#3b82f6", "#10b981"],
+      });
+    } catch {
+      // Ignore
+    }
 
     setTimeout(() => {
       if (resultRef.current) {

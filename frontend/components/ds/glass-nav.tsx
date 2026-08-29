@@ -17,27 +17,30 @@ export function GlassNav({ className, ...props }: GlassNavProps): React.JSX.Elem
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
 
+  const scrolledRef = React.useRef(false);
+
   React.useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 30) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
+      const isScrolled = window.scrollY > 30;
+      if (isScrolled !== scrolledRef.current) {
+        scrolledRef.current = isScrolled;
+        setScrolled(isScrolled);
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useGSAP(
     () => {
       if (!navRef.current) return;
-      gsap.fromTo(
-        navRef.current,
-        { y: -30, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out", delay: 0.05 }
-      );
+      gsap.from(navRef.current, {
+        y: -12,
+        opacity: 0.8,
+        duration: 0.4,
+        ease: "power2.out",
+      });
     },
     { scope: navRef }
   );

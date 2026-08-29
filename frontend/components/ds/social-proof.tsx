@@ -22,39 +22,24 @@ export function SocialProof({
 }: SocialProofProps): React.JSX.Element {
   const containerRef = React.useRef<HTMLDivElement>(null);
 
+  const avatars = [
+    { initials: "AK", bg: "bg-gradient-to-tr from-indigo-500 to-purple-500" },
+    { initials: "ML", bg: "bg-gradient-to-tr from-pink-500 to-rose-500" },
+    { initials: "JS", bg: "bg-gradient-to-tr from-amber-500 to-orange-500" },
+    { initials: "RK", bg: "bg-gradient-to-tr from-emerald-500 to-teal-500" },
+  ];
+
   useGSAP(
     () => {
       if (!containerRef.current) return;
-      const stars = containerRef.current.querySelectorAll(".star-icon");
-      const avatars = containerRef.current.querySelectorAll(".avatar-item");
-
-      gsap.fromTo(
-        avatars,
-        { scale: 0, opacity: 0, x: -10 },
-        {
-          scale: 1,
-          opacity: 1,
-          x: 0,
-          stagger: 0.08,
-          duration: 0.4,
-          ease: "back.out(2)",
-          delay: 0.3,
-        }
-      );
-
-      gsap.fromTo(
-        stars,
-        { scale: 0, opacity: 0, rotate: -30 },
-        {
-          scale: 1,
-          opacity: 1,
-          rotate: 0,
-          stagger: 0.06,
-          duration: 0.4,
-          ease: "back.out(2)",
-          delay: 0.5,
-        }
-      );
+      gsap.from(".avatar-item, .star-icon", {
+        scale: 0.8,
+        opacity: 0.5,
+        stagger: 0.04,
+        duration: 0.4,
+        ease: "power2.out",
+        delay: 0.1,
+      });
     },
     { scope: containerRef }
   );
@@ -65,28 +50,19 @@ export function SocialProof({
       className={cn("flex flex-col sm:flex-row items-center gap-3 select-none", className)}
       {...props}
     >
-      {/* Avatar Stack */}
-      <div className="flex -space-x-2.5 overflow-hidden p-0.5">
-        <img
-          className="avatar-item inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-zinc-900 object-cover shadow-xs"
-          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-          alt="Avatar 1"
-        />
-        <img
-          className="avatar-item inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-zinc-900 object-cover shadow-xs"
-          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
-          alt="Avatar 2"
-        />
-        <img
-          className="avatar-item inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-zinc-900 object-cover shadow-xs"
-          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80"
-          alt="Avatar 3"
-        />
-        <img
-          className="avatar-item inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-zinc-900 object-cover shadow-xs"
-          src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80"
-          alt="Avatar 4"
-        />
+      {/* Avatar Stack with zero network dependency */}
+      <div className="flex -space-x-2 overflow-hidden p-0.5">
+        {avatars.map((av, idx) => (
+          <div
+            key={idx}
+            className={cn(
+              "avatar-item inline-flex items-center justify-center h-7 w-7 rounded-full ring-2 ring-white dark:ring-zinc-900 text-white font-bold text-[10px] shadow-xs select-none",
+              av.bg
+            )}
+          >
+            {av.initials}
+          </div>
+        ))}
       </div>
 
       {/* Stars & Rating */}
@@ -95,11 +71,11 @@ export function SocialProof({
           {Array.from({ length: maxStars }).map((_, i) => (
             <Star
               key={i}
-              className="star-icon w-4 h-4 fill-amber-500 text-amber-500 stroke-[1.5]"
+              className="star-icon w-3.5 h-3.5 fill-amber-500 text-amber-500 stroke-[1.5]"
             />
           ))}
         </div>
-        <span className="text-sm font-bold text-zinc-900 dark:text-white ml-0.5">{rating}</span>
+        <span className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white ml-0.5">{rating}</span>
       </div>
 
       {/* Trust Text */}
