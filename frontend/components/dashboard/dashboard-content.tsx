@@ -9,6 +9,7 @@ import { DashboardNav } from "./dashboard-nav";
 import { StatsBanner } from "./stats-banner";
 import { RoomCard } from "./room-card";
 import { CreateRoomModal } from "./create-room-modal";
+import { CommandMenu } from "./command-menu";
 import { Plus, Tv, Loader2, WifiOff } from "lucide-react";
 
 interface ApiResponse<T> {
@@ -32,15 +33,22 @@ export function DashboardContent(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [activeTab, setActiveTab] = React.useState<"ALL" | "PUBLIC" | "MY_ROOMS">("ALL");
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+  const [isCommandMenuOpen, setIsCommandMenuOpen] = React.useState(false);
   const [quickCode, setQuickCode] = React.useState("");
-  const [isJoining, setIsJoining] = React.useState(false);
+  const [isPending, setIsPending] = React.useState(false);
   const [joinError, setJoinError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const handleOpenCommandMenu = () => setIsCommandMenuOpen(true);
+    window.addEventListener("open-command-menu", handleOpenCommandMenu);
+    return () => window.removeEventListener("open-command-menu", handleOpenCommandMenu);
+  }, []);
 
   const handleQuickJoin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quickCode.trim() || isJoining) return;
+    if (!quickCode.trim() || isPending) return;
     const clean = quickCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-    setIsJoining(true);
+    setIsPending(true);
     setJoinError(null);
 
     try {
@@ -94,7 +102,7 @@ export function DashboardContent(): React.JSX.Element {
       console.error("Failed to join room by code:", err);
       setJoinError(err?.message || `No active room found with code "${clean}".`);
     } finally {
-      setIsJoining(false);
+      setIsPending(false);
     }
   };
 
@@ -174,6 +182,7 @@ export function DashboardContent(): React.JSX.Element {
         onCreateClick={() => setIsCreateModalOpen(true)}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onOpenCommandMenu={() => setIsCommandMenuOpen(true)}
       />
 
       {/* Main Container */}
@@ -181,10 +190,10 @@ export function DashboardContent(): React.JSX.Element {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-zinc-950">
+            <h1 className="text-xl font-bold tracking-tight text-zinc-950 dark:text-white">
               Watch Rooms
             </h1>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Join live streams or create a synchronized session for your group
             </p>
           </div>
@@ -193,30 +202,45 @@ export function DashboardContent(): React.JSX.Element {
           <div className="flex flex-col items-end gap-1 max-w-xs w-full">
             <form
               onSubmit={handleQuickJoin}
-              className="flex items-center gap-2 bg-white border border-zinc-200 p-1 rounded-lg shadow-2xs w-full"
+              aria-busy={isPending}
+              className="flex items-center gap-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus-within:ring-2 focus-within:ring-zinc-950 dark:focus-within:ring-zinc-100 focus-within:border-zinc-950 dark:focus-within:border-zinc-100 p-1 rounded-lg shadow-2xs w-full transition-all"
             >
+              <label htmlFor="quick-join-input" className="sr-only">
+                Join room by 6-character code
+              </label>
               <input
+                id="quick-join-input"
                 type="text"
+                required
+                minLength={4}
+                maxLength={12}
+                pattern="[A-Za-z0-9]{4,12}"
+                title="Enter a valid room code"
                 placeholder="Join by code (e.g. K4M2X8)..."
                 value={quickCode}
                 onChange={(e) => {
                   setQuickCode(e.target.value);
                   if (joinError) setJoinError(null);
                 }}
-                disabled={isJoining}
-                className="flex-1 px-2.5 py-1 text-xs bg-transparent outline-none font-mono text-zinc-900 placeholder:text-zinc-400 disabled:opacity-50 uppercase"
+                disabled={isPending}
+                className="flex-1 px-2.5 py-1 text-xs bg-transparent outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-100 font-mono text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 disabled:opacity-50 uppercase"
               />
               <button
                 type="submit"
-                disabled={!quickCode.trim() || isJoining}
-                className="bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold px-3 py-1 rounded-md transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1 shrink-0"
+                disabled={isPending || !quickCode.trim()}
+                aria-disabled={isPending || !quickCode.trim()}
+                className="bg-zinc-950 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 text-xs font-semibold px-3 py-1 rounded-md transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1 shrink-0"
               >
-                {isJoining && <Loader2 className="w-3 h-3 animate-spin" />}
-                <span>{isJoining ? "Joining..." : "Join"}</span>
+                {isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+                <span>{isPending ? "Joining..." : "Join"}</span>
               </button>
             </form>
             {joinError && (
-              <p className="text-[11px] text-red-600 font-medium px-1 animate-in fade-in duration-150">
+              <p
+                role="alert"
+                aria-live="polite"
+                className="text-[11px] text-red-600 dark:text-red-400 font-medium px-1 animate-in fade-in duration-150"
+              >
                 {joinError}
               </p>
             )}
@@ -225,13 +249,13 @@ export function DashboardContent(): React.JSX.Element {
 
         {/* Server Reachability Warning */}
         {roomsError && (
-          <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 animate-in fade-in duration-150">
+          <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 animate-in fade-in duration-150">
             <WifiOff className="w-4 h-4 mt-0.5 shrink-0" />
             <div className="text-xs space-y-0.5">
               <p className="font-semibold">
                 Cannot reach the WatchParty server
               </p>
-              <p className="text-amber-700">
+              <p className="text-amber-700 dark:text-amber-300">
                 Public rooms may be missing and joining by code may fail. Make
                 sure the backend is running and reachable from this device.
               </p>
@@ -246,14 +270,14 @@ export function DashboardContent(): React.JSX.Element {
         />
 
         {/* Filter Controls */}
-        <div className="flex items-center justify-between gap-4 pt-2 border-t border-zinc-200">
-          <div className="flex items-center gap-1 p-1 bg-zinc-200/50 rounded-lg border border-zinc-200 text-xs font-medium">
+        <div className="flex items-center justify-between gap-4 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center gap-1 p-1 bg-zinc-200/50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-xs font-medium">
             <button
               onClick={() => setActiveTab("ALL")}
               className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${
                 activeTab === "ALL"
-                  ? "bg-white text-zinc-950 shadow-2xs font-semibold"
-                  : "text-zinc-600 hover:text-zinc-950"
+                  ? "bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white shadow-2xs font-semibold"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white"
               }`}
             >
               All ({rooms.length})
@@ -262,8 +286,8 @@ export function DashboardContent(): React.JSX.Element {
               onClick={() => setActiveTab("PUBLIC")}
               className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${
                 activeTab === "PUBLIC"
-                  ? "bg-white text-zinc-950 shadow-2xs font-semibold"
-                  : "text-zinc-600 hover:text-zinc-950"
+                  ? "bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white shadow-2xs font-semibold"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white"
               }`}
             >
               Public ({publicRoomsCount})
@@ -272,8 +296,8 @@ export function DashboardContent(): React.JSX.Element {
               onClick={() => setActiveTab("MY_ROOMS")}
               className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${
                 activeTab === "MY_ROOMS"
-                  ? "bg-white text-zinc-950 shadow-2xs font-semibold"
-                  : "text-zinc-600 hover:text-zinc-950"
+                  ? "bg-white dark:bg-zinc-900 text-zinc-950 dark:text-white shadow-2xs font-semibold"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white"
               }`}
             >
               My Rooms ({myRoomsCount})
@@ -294,21 +318,21 @@ export function DashboardContent(): React.JSX.Element {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-dashed border-zinc-200 p-12 text-center space-y-3">
-            <div className="h-10 w-10 rounded-full bg-zinc-100 text-zinc-400 mx-auto flex items-center justify-center">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 p-12 text-center space-y-3">
+            <div className="h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-400 mx-auto flex items-center justify-center">
               <Tv className="w-5 h-5" />
             </div>
             <div className="space-y-0.5">
-              <h3 className="font-semibold text-sm text-zinc-900">
+              <h2 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">
                 No rooms found
-              </h3>
-              <p className="text-xs text-zinc-500">
+              </h2>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 Create a new watch room or try another search term
               </p>
             </div>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1.5"
+              className="bg-zinc-950 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 text-xs font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1.5"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Create Room</span>
@@ -321,6 +345,14 @@ export function DashboardContent(): React.JSX.Element {
       <CreateRoomModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      {/* Command Menu */}
+      <CommandMenu
+        isOpen={isCommandMenuOpen}
+        onClose={() => setIsCommandMenuOpen(false)}
+        rooms={rooms}
+        onCreateRoom={() => setIsCreateModalOpen(true)}
       />
     </div>
   );

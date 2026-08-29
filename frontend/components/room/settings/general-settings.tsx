@@ -28,30 +28,37 @@ export function GeneralSettings({
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-zinc-300">Room Title</label>
+        <label htmlFor="general-room-title" className="text-xs font-semibold text-zinc-300">
+          Room Title
+        </label>
         <input
+          id="general-room-title"
           type="text"
+          required
+          minLength={2}
+          maxLength={100}
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
-          className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:border-zinc-700 outline-none"
+          className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:border-zinc-700 outline-none focus-visible:ring-1 focus-visible:ring-zinc-600"
         />
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-zinc-300">
+        <label htmlFor="general-room-desc" className="text-xs font-semibold text-zinc-300">
           Description (Optional)
         </label>
         <textarea
+          id="general-room-desc"
           rows={2}
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
           placeholder="What is this party about?"
-          className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:border-zinc-700 outline-none resize-none"
+          className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:border-zinc-700 outline-none focus-visible:ring-1 focus-visible:ring-zinc-600 resize-none"
         />
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-zinc-300">Visibility</label>
+        <div className="text-xs font-semibold text-zinc-300">Visibility</div>
         <div className="grid grid-cols-3 gap-2">
           <button
             type="button"
@@ -104,17 +111,19 @@ export function GeneralSettings({
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-zinc-300">
+        <label htmlFor="general-max-capacity" className="text-xs font-semibold text-zinc-300">
           Max Capacity ({maxMembers} Viewers)
         </label>
         <input
+          id="general-max-capacity"
+          aria-label="Max room viewer capacity"
           type="range"
           min={5}
           max={100}
           step={5}
           value={maxMembers}
           onChange={(e) => onMaxMembersChange(Number(e.target.value))}
-          className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-white"
+          className="w-full h-2 min-h-[24px] bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-white"
         />
       </div>
     </div>

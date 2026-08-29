@@ -4,7 +4,7 @@ export default function DashboardLoading(): React.JSX.Element {
   return (
     <div className="min-h-screen flex flex-col bg-zinc-50/50 text-zinc-950 font-sans">
       {/* Top Navbar Skeleton */}
-      <div className="h-16 border-b border-zinc-200/80 bg-white/80 px-6 flex items-center justify-between animate-pulse">
+      <div className="h-16 border-b border-zinc-200/80 bg-white/80 px-6 flex items-center justify-between animate-pulse motion-reduce:animate-none">
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-full bg-zinc-200" />
           <div className="h-4 w-28 rounded bg-zinc-200" />
@@ -17,7 +17,7 @@ export default function DashboardLoading(): React.JSX.Element {
       </div>
 
       {/* Main Container Skeleton */}
-      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 animate-pulse">
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 animate-pulse motion-reduce:animate-none">
         <div className="flex justify-between items-center">
           <div className="space-y-2">
             <div className="h-6 w-36 rounded bg-zinc-200" />

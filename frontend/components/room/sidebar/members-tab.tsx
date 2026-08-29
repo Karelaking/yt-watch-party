@@ -27,6 +27,7 @@ export function MembersTab({
 }: MembersTabProps): React.JSX.Element {
   const [editingNickname, setEditingNickname] = React.useState(false);
   const [nicknameInput, setNicknameInput] = React.useState("");
+  const [isPending, setIsPending] = React.useState(false);
   const [banModalUser, setBanModalUser] = React.useState<{
     id: string;
     name: string;
@@ -41,11 +42,16 @@ export function MembersTab({
       (m.user as any)?.id === currentUserId
   );
 
-  const handleSaveNickname = (e: React.FormEvent) => {
+  const handleSaveNickname = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nicknameInput.trim()) return;
-    onUpdateNickname(nicknameInput.trim());
-    setEditingNickname(false);
+    if (!nicknameInput.trim() || isPending) return;
+    setIsPending(true);
+    try {
+      await Promise.resolve(onUpdateNickname(nicknameInput.trim()));
+      setEditingNickname(false);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const handleConfirmBan = (e: React.FormEvent) => {
@@ -78,21 +84,31 @@ export function MembersTab({
           </div>
 
           {editingNickname ? (
-            <form onSubmit={handleSaveNickname} className="flex items-center gap-1.5">
+            <form onSubmit={handleSaveNickname} aria-busy={isPending} className="flex items-center gap-1.5">
+              <label htmlFor="member-nickname-input" className="sr-only">
+                Enter your nickname
+              </label>
               <input
+                id="member-nickname-input"
+                aria-label="Enter your nickname"
                 type="text"
+                required
+                minLength={1}
+                disabled={isPending}
                 placeholder="Enter nickname..."
                 value={nicknameInput}
                 onChange={(e) => setNicknameInput(e.target.value)}
                 autoFocus
                 maxLength={50}
-                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white outline-none"
+                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 disabled:opacity-60"
               />
               <button
                 type="submit"
-                className="px-2 py-1 bg-white text-zinc-950 rounded-lg text-xs font-semibold cursor-pointer"
+                disabled={isPending || !nicknameInput.trim()}
+                aria-disabled={isPending || !nicknameInput.trim()}
+                className="px-2 py-1 bg-white text-zinc-950 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
               >
-                Save
+                <span role="status" aria-live="polite">{isPending ? "Saving..." : "Save"}</span>
               </button>
               <button
                 type="button"
@@ -205,7 +221,12 @@ export function MembersTab({
             Ban {banModalUser.name}?
           </span>
           <div className="flex items-center gap-2">
+            <label htmlFor="ban-reason-input" className="sr-only">
+              Reason for ban
+            </label>
             <input
+              id="ban-reason-input"
+              aria-label="Reason for ban"
               type="text"
               value={banReason}
               onChange={(e) => setBanReason(e.target.value)}
@@ -213,6 +234,7 @@ export function MembersTab({
               className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-xs text-white"
             />
             <select
+              aria-label="Ban scope type"
               value={banType}
               onChange={(e) => setBanType(e.target.value as BanType)}
               className="bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-xs text-white"

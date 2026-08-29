@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ChatMessage, RoomSettings } from "@/lib/contract-types";
-import { Send, MessageSquareDashed } from "lucide-react";
+import { Send, MessageSquareDashed, Loader2 } from "lucide-react";
 import {
   ChatMessageList,
   ChatScrollToBottom,
@@ -20,7 +20,7 @@ interface ChatTabProps {
   currentUserId: string;
   settings: RoomSettings;
   isHostOrMod: boolean;
-  onSendMessage: (text: string) => void;
+  onSendMessage: (text: string) => void | Promise<void>;
 }
 
 export function ChatTab({
@@ -31,6 +31,7 @@ export function ChatTab({
   onSendMessage,
 }: ChatTabProps): React.JSX.Element {
   const [messageText, setMessageText] = React.useState("");
+  const [isPending, setIsPending] = React.useState(false);
   const [slowModeCountdown, setSlowModeCountdown] = React.useState(0);
   const [showScrollBottom, setShowScrollBottom] = React.useState(false);
   const [unreadCount, setUnreadCount] = React.useState(0);
@@ -95,20 +96,25 @@ export function ChatTab({
     return () => clearTimeout(timer);
   }, [slowModeCountdown]);
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = messageText.trim();
-    if (!trimmed) return;
+    if (!trimmed || isPending) return;
     if (slowModeCountdown > 0 && !isHostOrMod) return;
 
-    onSendMessage(trimmed);
-    setMessageText("");
+    setIsPending(true);
+    try {
+      await Promise.resolve(onSendMessage(trimmed));
+      setMessageText("");
 
-    // Automatically scroll down when the user sends a message
-    setTimeout(() => scrollToBottom("smooth"), 50);
+      // Automatically scroll down when the user sends a message
+      setTimeout(() => scrollToBottom("smooth"), 50);
 
-    if (settings.slowModeSeconds > 0 && !isHostOrMod) {
-      setSlowModeCountdown(settings.slowModeSeconds);
+      if (settings.slowModeSeconds > 0 && !isHostOrMod) {
+        setSlowModeCountdown(settings.slowModeSeconds);
+      }
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -186,12 +192,16 @@ export function ChatTab({
       {settings.allowChat ? (
         <form
           onSubmit={handleSend}
+          aria-busy={isPending}
           className="p-2.5 bg-zinc-950 border-t border-zinc-800/80 flex items-center gap-2"
         >
           <Input
+            id="room-chat-message-input"
+            aria-label="Chat message"
             type="text"
+            required
             value={messageText}
-            disabled={slowModeCountdown > 0 && !isHostOrMod}
+            disabled={isPending || (slowModeCountdown > 0 && !isHostOrMod)}
             onChange={(e) => setMessageText(e.target.value)}
             placeholder={
               slowModeCountdown > 0 && !isHostOrMod
@@ -199,22 +209,38 @@ export function ChatTab({
                 : "Type a message..."
             }
             maxLength={500}
-            className="flex-1 bg-zinc-900 border-zinc-800 text-xs text-white placeholder:text-zinc-500 rounded-xl px-3 py-2 h-9 focus-visible:ring-1 focus-visible:ring-zinc-600"
+            className="flex-1 bg-zinc-900 border-zinc-800 text-xs text-white placeholder:text-zinc-500 rounded-xl px-3 py-2 h-9 focus-visible:ring-1 focus-visible:ring-zinc-600 disabled:opacity-60"
           />
           <Button
             type="submit"
             size="sm"
+            aria-label="Send chat message"
             disabled={
+              isPending ||
+              !messageText.trim() ||
+              (slowModeCountdown > 0 && !isHostOrMod)
+            }
+            aria-disabled={
+              isPending ||
               !messageText.trim() ||
               (slowModeCountdown > 0 && !isHostOrMod)
             }
             className="h-9 w-9 p-0 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 transition-transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
           >
-            <Send className="w-3.5 h-3.5" />
+            {isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Send className="w-3.5 h-3.5" />
+            )}
+            <span className="sr-only">Send</span>
           </Button>
         </form>
       ) : (
-        <div className="p-3 bg-zinc-950 border-t border-zinc-800/80 text-center text-xs text-zinc-500 font-medium select-none">
+        <div
+          role="status"
+          aria-live="polite"
+          className="p-3 bg-zinc-950 border-t border-zinc-800/80 text-center text-xs text-zinc-500 font-medium select-none"
+        >
           Chat has been disabled by host.
         </div>
       )}

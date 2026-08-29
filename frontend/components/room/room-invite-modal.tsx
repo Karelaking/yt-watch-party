@@ -10,6 +10,7 @@ import {
   Check,
   Mail,
   Send,
+  Loader2,
 } from "lucide-react";
 
 interface RoomInviteModalProps {
@@ -33,18 +34,16 @@ function RoomInviteForm({
 }): React.JSX.Element {
   const [copiedLink, setCopiedLink] = React.useState(false);
   const [copiedCode, setCopiedCode] = React.useState(false);
+  const [isPending, setIsPending] = React.useState(false);
   const [email, setEmail] = React.useState("");
   const [expiresHours, setExpiresHours] = React.useState(24);
   const [inviteList, setInviteList] = React.useState<RoomInvitation[]>(room.invitations || []);
   const [sentSuccess, setSentSuccess] = React.useState(false);
 
-  const [roomUrl, setRoomUrl] = React.useState("");
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      setRoomUrl(`${window.location.origin}/room/${room.code}`);
-    }
-  }, [room.code]);
+  const roomUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/room/${room.id}`
+      : `https://watchparty.live/room/${room.id}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(roomUrl);
@@ -58,19 +57,27 @@ function RoomInviteForm({
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const handleCreateInvitation = (e: React.FormEvent) => {
+  const handleCreateInvitation = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newInv = createRoomInvitation(
-      room.id,
-      currentUserId,
-      currentUserName,
-      email.trim() || undefined,
-      expiresHours
-    );
-    setInviteList((prev) => [newInv, ...prev]);
-    setEmail("");
-    setSentSuccess(true);
-    setTimeout(() => setSentSuccess(false), 2000);
+    if (isPending) return;
+    setIsPending(true);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      const newInv = createRoomInvitation(
+        room.id,
+        currentUserId,
+        currentUserName,
+        email.trim() || undefined,
+        expiresHours
+      );
+      setInviteList((prev) => [newInv, ...prev]);
+      setEmail("");
+      setSentSuccess(true);
+      setTimeout(() => setSentSuccess(false), 2000);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
@@ -83,7 +90,9 @@ function RoomInviteForm({
             <h2 className="text-sm font-bold tracking-tight">Invite to Watch Party</h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Close invite modal"
             className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
@@ -123,25 +132,33 @@ function RoomInviteForm({
           </div>
 
           {/* Create Custom Token / Email Invite */}
-          <form onSubmit={handleCreateInvitation} className="space-y-3 pt-3 border-t border-zinc-800">
-            <label className="font-semibold text-zinc-300 flex items-center gap-1.5">
+          <form onSubmit={handleCreateInvitation} aria-busy={isPending} className="space-y-3 pt-3 border-t border-zinc-800">
+            <label
+              htmlFor="invite-email-input"
+              className="font-semibold text-zinc-300 flex items-center gap-1.5"
+            >
               <Mail className="w-3.5 h-3.5 text-zinc-400" />
               <span>Generate Invitation Token / Email Invite</span>
             </label>
 
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
               <input
+                id="invite-email-input"
                 type="email"
+                autoComplete="email"
                 placeholder="friend@email.com (optional)"
                 value={email}
+                disabled={isPending}
                 onChange={(e) => setEmail(e.target.value)}
-                className="sm:col-span-8 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-white outline-none focus:border-zinc-500"
+                className="sm:col-span-8 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-white outline-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-60"
               />
 
               <select
+                aria-label="Invitation expiration duration"
                 value={expiresHours}
+                disabled={isPending}
                 onChange={(e) => setExpiresHours(Number(e.target.value))}
-                className="sm:col-span-4 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-2 text-white outline-none focus:border-zinc-500"
+                className="sm:col-span-4 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-2 text-white outline-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-60"
               >
                 <option value={1}>Expires in 1h</option>
                 <option value={24}>Expires in 24h</option>
@@ -151,14 +168,30 @@ function RoomInviteForm({
 
             <button
               type="submit"
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              disabled={isPending}
+              aria-disabled={isPending}
+              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
-              <Send className="w-3.5 h-3.5" />
-              <span>{email ? "Send Email Invitation" : "Create Expiring Invite Link"}</span>
+              {isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Send className="w-3.5 h-3.5" />
+              )}
+              <span>
+                {isPending
+                  ? "Generating Invite..."
+                  : email
+                  ? "Send Email Invitation"
+                  : "Create Expiring Invite Link"}
+              </span>
             </button>
 
             {sentSuccess && (
-              <p className="text-emerald-400 text-center font-medium">
+              <p
+                role="status"
+                aria-live="polite"
+                className="text-emerald-400 text-center font-medium"
+              >
                 Invitation created successfully!
               </p>
             )}

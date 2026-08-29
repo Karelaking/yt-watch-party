@@ -60,7 +60,7 @@ export function RoomCard({ room }: RoomCardProps): React.JSX.Element {
         {currentMedia?.thumbnailUrl ? (
           <img
             src={currentMedia.thumbnailUrl}
-            alt={room.name}
+            alt={room.name ? `${room.name} thumbnail` : "Watch room video thumbnail"}
             className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-102 transition-all duration-300"
           />
         ) : (

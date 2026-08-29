@@ -132,7 +132,9 @@ export function CreateRoomModal({
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Close create room modal"
             className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
@@ -147,35 +149,43 @@ export function CreateRoomModal({
         )}
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} aria-busy={isSubmitting} className="p-5 space-y-4">
           {/* Room Name */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-zinc-800">
+            <label
+              htmlFor="create-room-title"
+              className="text-xs font-semibold text-zinc-800"
+            >
               Room Title
             </label>
             <input
+              id="create-room-title"
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Lofi Chill Lounge"
-              className="w-full bg-zinc-50 border border-zinc-200 focus:bg-white rounded-lg px-3 py-2 text-xs text-zinc-900 focus:border-zinc-950 outline-none transition-all"
+              className="w-full bg-zinc-50 border border-zinc-200 focus:bg-white rounded-lg px-3 py-2 text-xs text-zinc-900 focus:border-zinc-950 focus:ring-1 focus:ring-zinc-950 outline-none transition-all"
             />
           </div>
 
           {/* YouTube Video URL */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-zinc-800 flex items-center gap-1.5">
+            <label
+              htmlFor="create-youtube-url"
+              className="text-xs font-semibold text-zinc-800 flex items-center gap-1.5"
+            >
               <YouTubeIcon className="w-3.5 h-3.5 fill-red-500 text-red-500" />
               <span>YouTube Video URL</span>
             </label>
             <input
+              id="create-youtube-url"
               type="url"
               required
               value={youtubeUrl}
               onChange={(e) => setYoutubeUrl(e.target.value)}
               placeholder="https://www.youtube.com/watch?v=..."
-              className="w-full bg-zinc-50 border border-zinc-200 focus:bg-white rounded-lg px-3 py-2 text-xs text-zinc-900 focus:border-zinc-950 outline-none transition-all font-mono"
+              className="w-full bg-zinc-50 border border-zinc-200 focus:bg-white rounded-lg px-3 py-2 text-xs text-zinc-900 focus:border-zinc-950 focus:ring-1 focus:ring-zinc-950 outline-none transition-all font-mono"
             />
 
             {/* Video preview strip */}
@@ -183,7 +193,9 @@ export function CreateRoomModal({
               <div className="flex items-center gap-2.5 p-2 rounded-lg bg-zinc-50 border border-zinc-200 mt-2">
                 <img
                   src={thumbnail}
-                  alt="preview"
+                  alt="YouTube video thumbnail preview"
+                  width={48}
+                  height={32}
                   className="w-12 h-8 rounded object-cover border border-zinc-200"
                 />
                 <div className="flex-1 min-w-0 text-xs">

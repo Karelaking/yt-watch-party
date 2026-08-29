@@ -2,14 +2,14 @@
 
 import * as React from "react";
 import type { Playlist, RoomSettings } from "@/lib/contract-types";
-import { Plus, Play, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Play, Trash2, ChevronUp, ChevronDown, Loader2 } from "lucide-react";
 
 interface QueueTabProps {
   playlist: Playlist | null;
   settings: RoomSettings;
   isHostOrMod: boolean;
   canControl: boolean;
-  onAddPlaylistItem: (mediaUrl: string) => void;
+  onAddPlaylistItem: (mediaUrl: string) => void | Promise<void>;
   onRemovePlaylistItem: (itemId: string) => void;
   onReorderPlaylistItem: (itemId: string, direction: "UP" | "DOWN") => void;
   onPlayQueueItem: (mediaId: string) => void;
@@ -26,12 +26,18 @@ export function QueueTab({
   onPlayQueueItem,
 }: QueueTabProps): React.JSX.Element {
   const [newQueueUrl, setNewQueueUrl] = React.useState("");
+  const [isPending, setIsPending] = React.useState(false);
 
-  const handleAddQueue = (e: React.FormEvent) => {
+  const handleAddQueue = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newQueueUrl.trim()) return;
-    onAddPlaylistItem(newQueueUrl.trim());
-    setNewQueueUrl("");
+    if (!newQueueUrl.trim() || isPending) return;
+    setIsPending(true);
+    try {
+      await Promise.resolve(onAddPlaylistItem(newQueueUrl.trim()));
+      setNewQueueUrl("");
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const canManagePlaylist = !settings.onlyHostCanManagePlaylist || isHostOrMod;
@@ -41,21 +47,35 @@ export function QueueTab({
       <div className="flex-1 p-3 overflow-y-auto space-y-3">
         {/* Add Queue */}
         {canManagePlaylist && (
-          <form onSubmit={handleAddQueue} className="flex items-center gap-1.5">
+          <form onSubmit={handleAddQueue} aria-busy={isPending} className="flex items-center gap-1.5">
+            <label htmlFor="add-queue-video-input" className="sr-only">
+              YouTube video URL or ID
+            </label>
             <input
+              id="add-queue-video-input"
+              aria-label="YouTube video URL or ID to add to queue"
               type="text"
+              required
+              minLength={3}
+              disabled={isPending}
               placeholder="Paste YouTube link or Video ID..."
               value={newQueueUrl}
               onChange={(e) => setNewQueueUrl(e.target.value)}
-              className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-zinc-700 font-mono text-zinc-200 placeholder:text-zinc-600"
+              className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-zinc-700 focus-visible:ring-1 focus-visible:ring-zinc-600 font-mono text-zinc-200 placeholder:text-zinc-600 disabled:opacity-60"
             />
             <button
               type="submit"
-              disabled={!newQueueUrl.trim()}
-              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label="Add video to queue"
+              disabled={isPending || !newQueueUrl.trim()}
+              aria-disabled={isPending || !newQueueUrl.trim()}
+              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
             >
-              <Plus className="w-3 h-3" />
-              <span>Add</span>
+              {isPending ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Plus className="w-3 h-3" />
+              )}
+              <span role="status" aria-live="polite">{isPending ? "Adding..." : "Add"}</span>
             </button>
           </form>
         )}
@@ -85,18 +105,22 @@ export function QueueTab({
                 <div className="flex items-center gap-0.5">
                   {idx > 0 && isHostOrMod && (
                     <button
+                      type="button"
                       onClick={() => onReorderPlaylistItem(item.id, "UP")}
-                      className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white"
+                      className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white cursor-pointer"
                       title="Move Up"
+                      aria-label={`Move ${item.media?.title || "video"} up in queue`}
                     >
                       <ChevronUp className="w-3 h-3" />
                     </button>
                   )}
                   {idx < (playlist?.items?.length || 0) - 1 && isHostOrMod && (
                     <button
+                      type="button"
                       onClick={() => onReorderPlaylistItem(item.id, "DOWN")}
-                      className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white"
+                      className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white cursor-pointer"
                       title="Move Down"
+                      aria-label={`Move ${item.media?.title || "video"} down in queue`}
                     >
                       <ChevronDown className="w-3 h-3" />
                     </button>
@@ -105,9 +129,11 @@ export function QueueTab({
 
                 {canControl && (
                   <button
+                    type="button"
                     onClick={() => onPlayQueueItem(item.media?.id || item.mediaId)}
                     className="p-1 rounded bg-zinc-800 hover:bg-zinc-700 text-white cursor-pointer"
                     title="Play now"
+                    aria-label={`Play ${item.media?.title || "video"} now`}
                   >
                     <Play className="w-3 h-3 fill-white ml-0.5" />
                   </button>
@@ -115,8 +141,11 @@ export function QueueTab({
 
                 {isHostOrMod && (
                   <button
+                    type="button"
                     onClick={() => onRemovePlaylistItem(item.id)}
                     className="p-1 rounded text-zinc-500 hover:text-red-400 hover:bg-red-950/40 cursor-pointer"
+                    title="Remove from queue"
+                    aria-label={`Remove ${item.media?.title || "video"} from queue`}
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>

@@ -37,9 +37,9 @@ interface PlayerControlsBarProps {
   onRateChange: (rate: number) => void;
   onToggleSpeedMenu: () => void;
   onToggleFullscreen: () => void;
-  onScrubberMouseMove: (e: React.MouseEvent<HTMLDivElement>) => void;
-  onScrubberMouseLeave: () => void;
-  onScrubberClick: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onScrubberMouseMove: (e: React.MouseEvent<any>) => void;
+  onScrubberMouseLeave: (e: React.MouseEvent<any>) => void;
+  onScrubberClick: (e: React.MouseEvent<any>) => void;
 }
 
 export function PlayerControlsBar({
@@ -57,6 +57,7 @@ export function PlayerControlsBar({
   hoverScrubTime,
   onTogglePlay,
   onSkip,
+  onSeek,
   onVolumeChange,
   onToggleMute,
   onRateChange,
@@ -77,7 +78,7 @@ export function PlayerControlsBar({
     >
       {/* Scrubber Progress Bar — Interactive only for Host/Authorized Controllers */}
       {canControl ? (
-        <div className="relative group/scrub py-2 cursor-pointer">
+        <div className="relative group/scrub py-2">
           {/* Scrubber Tooltip */}
           {hoverScrubTime !== null && (
             <div
@@ -90,23 +91,40 @@ export function PlayerControlsBar({
             </div>
           )}
 
-          <div
+          <button
+            type="button"
+            role="slider"
+            tabIndex={0}
+            aria-label="Video timeline scrubber"
+            aria-valuemin={0}
+            aria-valuemax={Math.round(duration || 100)}
+            aria-valuenow={Math.round(currentTime || 0)}
+            aria-valuetext={`${formatSeconds(currentTime)} of ${formatSeconds(duration)}`}
             onClick={onScrubberClick}
             onMouseMove={onScrubberMouseMove}
             onMouseLeave={onScrubberMouseLeave}
-            className="relative h-1.5 hover:h-2.5 w-full bg-zinc-800/90 rounded-full overflow-hidden transition-all"
+            onKeyDown={(e) => {
+              if (e.key === "ArrowLeft") {
+                e.preventDefault();
+                onSeek(Math.max(0, currentTime - 5));
+              } else if (e.key === "ArrowRight") {
+                e.preventDefault();
+                onSeek(Math.min(duration, currentTime + 5));
+              }
+            }}
+            className="relative h-1.5 hover:h-2.5 w-full bg-zinc-800/90 rounded-full overflow-hidden transition-all focus-visible:ring-2 focus-visible:ring-white outline-none border-none p-0 cursor-pointer block"
           >
             {/* Buffered track */}
             <div
               style={{ width: `${bufferedPercent}%` }}
-              className="absolute left-0 top-0 bottom-0 bg-zinc-700/80 rounded-full transition-all duration-300"
+              className="absolute left-0 top-0 bottom-0 bg-zinc-700/80 rounded-full transition-all duration-300 pointer-events-none"
             />
             {/* Played track */}
             <div
               style={{ width: `${progressPercent}%` }}
-              className="absolute left-0 top-0 bottom-0 bg-white rounded-full transition-all duration-75"
+              className="absolute left-0 top-0 bottom-0 bg-white rounded-full transition-all duration-75 pointer-events-none"
             />
-          </div>
+          </button>
         </div>
       ) : (
         /* Non-interactive progress indicator for viewers */
@@ -168,6 +186,7 @@ export function PlayerControlsBar({
             <button
               type="button"
               onClick={onToggleMute}
+              aria-label={isMuted ? "Unmute audio" : "Mute audio"}
               className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
               title={isMuted ? "Unmute (M)" : "Mute (M)"}
             >
@@ -180,12 +199,14 @@ export function PlayerControlsBar({
               )}
             </button>
             <input
+              id="player-volume-slider"
+              aria-label="Player volume slider"
               type="range"
               min="0"
               max="100"
               value={isMuted ? 0 : volume}
               onChange={(e) => onVolumeChange(Number(e.target.value))}
-              className="w-16 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-white"
+              className="w-16 h-1 min-h-[24px] bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-white"
             />
           </div>
 

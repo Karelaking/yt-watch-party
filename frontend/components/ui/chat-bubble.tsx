@@ -143,10 +143,16 @@ const ChatBubbleMessage = React.forwardRef<
     {...props}
   >
     {isLoading ? (
-      <div className="flex items-center gap-1.5 py-1">
+      <div
+        role="status"
+        aria-live="polite"
+        aria-label="Loading message"
+        className="flex items-center gap-1.5 py-1"
+      >
         <span className="h-1.5 w-1.5 rounded-full bg-current animate-bounce" />
         <span className="h-1.5 w-1.5 rounded-full bg-current animate-bounce [animation-delay:0.2s]" />
         <span className="h-1.5 w-1.5 rounded-full bg-current animate-bounce [animation-delay:0.4s]" />
+        <span className="sr-only">Loading message...</span>
       </div>
     ) : (
       children

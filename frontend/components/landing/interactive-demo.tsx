@@ -4,7 +4,7 @@ import * as React from "react";
 import { PillButton } from "@/components/ds/pill-button";
 import { PillBadge } from "@/components/ds/pill-badge";
 import { YouTubeIcon } from "@/components/ds/brand-icons";
-import { Copy, Check, Sparkles, Users, Play, Shield, Radio } from "lucide-react";
+import { Copy, Check, Sparkles, Users, Play, Shield, Radio, Loader2 } from "lucide-react";
 import confetti from "canvas-confetti";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -19,7 +19,9 @@ export function InteractiveDemo(): React.JSX.Element {
   const [youtubeUrl, setYoutubeUrl] = React.useState("https://www.youtube.com/watch?v=jfKfPfyJRdk");
   const [roomName, setRoomName] = React.useState("Saturday Chill & Vibe");
   const [copied, setCopied] = React.useState(false);
+  const [isPending, setIsPending] = React.useState(false);
   const [created, setCreated] = React.useState(false);
+  const [errors, setErrors] = React.useState<{ youtubeUrl?: string; roomName?: string }>({});
   const resultRef = React.useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -60,9 +62,41 @@ export function InteractiveDemo(): React.JSX.Element {
     { title: "Apple Vision Pro Reveal", url: "https://www.youtube.com/watch?v=TX9qSaGXFyg", category: "Tech ⚡" },
   ];
 
-  const handleCreateRoom = (e: React.FormEvent) => {
+  const validate = (): boolean => {
+    const nextErrors: { youtubeUrl?: string; roomName?: string } = {};
+    const urlPattern = /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/.+/i;
+
+    if (!youtubeUrl.trim()) {
+      nextErrors.youtubeUrl = "YouTube URL is required";
+    } else if (!urlPattern.test(youtubeUrl.trim())) {
+      nextErrors.youtubeUrl = "Please enter a valid YouTube video URL";
+    }
+
+    if (!roomName.trim()) {
+      nextErrors.roomName = "Party room name is required";
+    } else if (roomName.trim().length < 2) {
+      nextErrors.roomName = "Room name must be at least 2 characters";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isPending) return;
+
+    if (!validate()) {
+      return;
+    }
+
+    setIsPending(true);
+
+    // Simulate instant room provisioning with brief asynchronous delay
+    await new Promise((resolve) => setTimeout(resolve, 350));
+
     setCreated(true);
+    setIsPending(false);
 
     confetti({
       particleCount: 50,
@@ -134,34 +168,67 @@ export function InteractiveDemo(): React.JSX.Element {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleCreateRoom} className="space-y-4">
+      <form onSubmit={handleCreateRoom} aria-busy={isPending} noValidate={false} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
+            <label
+              htmlFor="demo-youtube-url"
+              className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5"
+            >
               <YouTubeIcon className="w-4 h-4 text-red-600" /> YouTube Video URL
             </label>
             <input
-              type="text"
+              id="demo-youtube-url"
+              type="url"
+              pattern="https?://.*"
               value={youtubeUrl}
-              onChange={(e) => setYoutubeUrl(e.target.value)}
+              onChange={(e) => {
+                setYoutubeUrl(e.target.value);
+                if (errors.youtubeUrl) setErrors((prev) => ({ ...prev, youtubeUrl: undefined }));
+              }}
+              disabled={isPending}
+              aria-invalid={Boolean(errors.youtubeUrl)}
+              aria-describedby={errors.youtubeUrl ? "demo-youtube-url-error" : undefined}
               placeholder="https://www.youtube.com/watch?v=..."
-              className="w-full px-4 py-2.5 rounded-2xl bg-zinc-50 border border-zinc-200 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:bg-white transition-all font-mono"
+              className="w-full px-4 py-2.5 rounded-2xl bg-zinc-50 border border-zinc-200 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:bg-white transition-all font-mono disabled:opacity-60"
               required
             />
+            {errors.youtubeUrl && (
+              <p id="demo-youtube-url-error" className="text-[11px] text-red-600 font-medium px-1">
+                {errors.youtubeUrl}
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
+            <label
+              htmlFor="demo-room-name"
+              className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5"
+            >
               <Users className="w-3.5 h-3.5 text-zinc-900" /> Party Room Name
             </label>
             <input
+              id="demo-room-name"
               type="text"
+              minLength={2}
+              maxLength={60}
               value={roomName}
-              onChange={(e) => setRoomName(e.target.value)}
+              onChange={(e) => {
+                setRoomName(e.target.value);
+                if (errors.roomName) setErrors((prev) => ({ ...prev, roomName: undefined }));
+              }}
+              disabled={isPending}
+              aria-invalid={Boolean(errors.roomName)}
+              aria-describedby={errors.roomName ? "demo-room-name-error" : undefined}
               placeholder="e.g. Anime Night with the Boys"
-              className="w-full px-4 py-2.5 rounded-2xl bg-zinc-50 border border-zinc-200 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:bg-white transition-all"
+              className="w-full px-4 py-2.5 rounded-2xl bg-zinc-50 border border-zinc-200 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:bg-white transition-all disabled:opacity-60"
               required
             />
+            {errors.roomName && (
+              <p id="demo-room-name-error" className="text-[11px] text-red-600 font-medium px-1">
+                {errors.roomName}
+              </p>
+            )}
           </div>
         </div>
 
@@ -174,11 +241,13 @@ export function InteractiveDemo(): React.JSX.Element {
           <PillButton
             type="submit"
             variant="default"
-            pulse={!created}
-            icon={<Sparkles className="w-4 h-4" />}
+            pulse={!created && !isPending}
+            disabled={isPending || created}
+            aria-disabled={isPending || created}
+            icon={isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             className="w-full sm:w-auto"
           >
-            Launch Instant Room 🚀
+            {isPending ? "Creating Room..." : created ? "Room Ready! 🎉" : "Launch Instant Room 🚀"}
           </PillButton>
         </div>
       </form>
@@ -187,6 +256,8 @@ export function InteractiveDemo(): React.JSX.Element {
       {created && (
         <div
           ref={resultRef}
+          role="status"
+          aria-live="polite"
           className="mt-6 p-5 rounded-2xl bg-zinc-950 text-white border border-zinc-800 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4"
         >
           <div className="space-y-1">

@@ -68,7 +68,10 @@ export function GlassNav({ className, ...props }: GlassNavProps): React.JSX.Elem
         </a>
 
         {/* Desktop Nav Items */}
-        <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-zinc-300">
+        <nav
+          aria-label="Main Navigation"
+          className="hidden md:flex items-center gap-7 text-sm font-medium text-zinc-300"
+        >
           <a
             href="#features"
             className="hover:text-white transition-colors duration-200"
@@ -141,83 +144,99 @@ export function GlassNav({ className, ...props }: GlassNavProps): React.JSX.Elem
 
         {/* Mobile Menu Trigger */}
         <button
-          className="md:hidden text-zinc-300 hover:text-white p-1"
+          type="button"
+          className="md:hidden text-zinc-300 hover:text-white p-1 cursor-pointer"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
+          aria-label="Toggle navigation menu"
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-nav-panel"
         >
           {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
       {/* Mobile Menu Dropdown */}
-      {mobileMenuOpen && (
-        <div className="md:hidden mt-2 p-4 rounded-3xl bg-zinc-950 border border-zinc-800 text-white shadow-2xl flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
-          <a
-            href="#features"
-            className="py-2 px-3 rounded-lg hover:bg-zinc-900 text-sm font-medium"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Features
-          </a>
-          <a
-            href="#how-it-works"
-            className="py-2 px-3 rounded-lg hover:bg-zinc-900 text-sm font-medium"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            How it Works
-          </a>
-          <a
-            href="#sync-tech"
-            className="py-2 px-3 rounded-lg hover:bg-zinc-900 text-sm font-medium"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Integrations
-          </a>
-          <a
-            href="#reviews"
-            className="py-2 px-3 rounded-lg hover:bg-zinc-900 text-sm font-medium"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Reviews
-          </a>
-          <div className="pt-2 border-t border-zinc-800 flex flex-col gap-2">
-            <Show when="signed-out">
-              <Link
-                href="/sign-in"
-                className="w-full text-center py-2 px-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-sm font-medium text-white transition-colors cursor-pointer"
-                onClick={() => setMobileMenuOpen(false)}
+      <nav
+        id="mobile-nav-panel"
+        aria-label="Mobile Navigation"
+        aria-hidden={!mobileMenuOpen}
+        className={cn(
+          "md:hidden mt-2 p-4 rounded-3xl bg-zinc-950 border border-zinc-800 text-white shadow-2xl flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-200",
+          !mobileMenuOpen && "hidden"
+        )}
+      >
+        <a
+          href="#features"
+          className="py-2 px-3 rounded-lg hover:bg-zinc-900 text-sm font-medium"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          Features
+        </a>
+        <a
+          href="#how-it-works"
+          className="py-2 px-3 rounded-lg hover:bg-zinc-900 text-sm font-medium"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          How it Works
+        </a>
+        <a
+          href="#sync-tech"
+          className="py-2 px-3 rounded-lg hover:bg-zinc-900 text-sm font-medium"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          Integrations
+        </a>
+        <a
+          href="#reviews"
+          className="py-2 px-3 rounded-lg hover:bg-zinc-900 text-sm font-medium"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          Reviews
+        </a>
+        <a
+          href="#faq"
+          className="py-2 px-3 rounded-lg hover:bg-zinc-900 text-sm font-medium"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          FAQ
+        </a>
+        <div className="pt-2 border-t border-zinc-800 flex flex-col gap-2">
+          <Show when="signed-out">
+            <Link
+              href="/sign-in"
+              className="w-full text-center py-2 px-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-sm font-medium text-white transition-colors cursor-pointer"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/sign-up"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <PillButton
+                variant="outline"
+                className="w-full bg-white text-zinc-950 hover:bg-zinc-100 border-none font-semibold justify-center"
+                confettiOnClick={true}
               >
-                Sign In
-              </Link>
-              <Link
-                href="/sign-up"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <PillButton
-                  variant="outline"
-                  className="w-full bg-white text-zinc-950 hover:bg-zinc-100 border-none font-semibold justify-center"
-                  confettiOnClick={true}
-                >
-                  Sign Up
-                </PillButton>
-              </Link>
-            </Show>
-            <Show when="signed-in">
-              <Link
-                href="/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center py-2 px-3 rounded-lg bg-white text-zinc-950 font-bold text-sm transition-colors cursor-pointer"
-              >
-                Go to Dashboard
-              </Link>
-              <div className="flex items-center justify-between px-3 py-2 bg-zinc-900 rounded-lg">
-                <span className="text-sm font-medium text-zinc-300">Account</span>
-                <UserButton />
-              </div>
-            </Show>
-          </div>
+                Sign Up
+              </PillButton>
+            </Link>
+          </Show>
+          <Show when="signed-in">
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full text-center py-2 px-3 rounded-lg bg-white text-zinc-950 font-bold text-sm transition-colors cursor-pointer"
+            >
+              Go to Dashboard
+            </Link>
+            <div className="flex items-center justify-between px-3 py-2 bg-zinc-900 rounded-lg">
+              <span className="text-sm font-medium text-zinc-300">Account</span>
+              <UserButton />
+            </div>
+          </Show>
         </div>
-      )}
+      </nav>
     </header>
   );
 }

@@ -84,6 +84,10 @@ export const metadata: Metadata = {
   category: "entertainment",
 };
 
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { AppCommandMenu } from "@/components/app-command-menu";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -103,9 +107,13 @@ export default function RootLayout({
         suppressHydrationWarning
         className="min-h-full flex flex-col bg-background text-foreground bg-dot-pattern selection:bg-zinc-900 selection:text-white"
       >
-        <ClerkProviderWrapper>
-          <GsapProvider>{children}</GsapProvider>
-        </ClerkProviderWrapper>
+        <ThemeProvider>
+          <ClerkProviderWrapper>
+            <GsapProvider>{children}</GsapProvider>
+          </ClerkProviderWrapper>
+          <AppCommandMenu />
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

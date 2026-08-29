@@ -6,4 +6,5 @@ export * from "./scroll-area";
 export * from "./input";
 export * from "./chat-message-list";
 export * from "./chat-bubble";
+export * from "./command";
 

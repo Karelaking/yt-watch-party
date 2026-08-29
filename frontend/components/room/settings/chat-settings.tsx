@@ -15,23 +15,26 @@ export function ChatSettings({
   return (
     <div className="space-y-3 text-xs">
       <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950 border border-zinc-800">
-        <div>
+        <label htmlFor="setting-enable-chat" className="cursor-pointer">
           <div className="font-semibold text-zinc-200">Enable Live Chat</div>
           <div className="text-[11px] text-zinc-400">
             Allow viewers to send messages in the room
           </div>
-        </div>
+        </label>
         <input
+          id="setting-enable-chat"
           type="checkbox"
           checked={settings.allowChat}
           onChange={(e) => onUpdate("allowChat", e.target.checked)}
-          className="h-4 w-4 accent-white cursor-pointer"
+          className="h-6 w-6 min-h-[24px] min-w-[24px] accent-white cursor-pointer"
         />
       </div>
 
       <div className="space-y-1.5 p-2.5 rounded-xl bg-zinc-950 border border-zinc-800">
         <div className="flex items-center justify-between">
-          <div className="font-semibold text-zinc-200">Slow Mode Delay</div>
+          <label htmlFor="setting-slow-mode" className="font-semibold text-zinc-200 cursor-pointer">
+            Slow Mode Delay
+          </label>
           <span className="font-mono text-zinc-400 text-xs">
             {settings.slowModeSeconds === 0
               ? "Off"
@@ -42,6 +45,7 @@ export function ChatSettings({
           Cooldown between messages for non-moderators
         </div>
         <input
+          id="setting-slow-mode"
           type="range"
           min={0}
           max={60}
@@ -50,22 +54,23 @@ export function ChatSettings({
           onChange={(e) =>
             onUpdate("slowModeSeconds", Number(e.target.value))
           }
-          className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-white mt-1"
+          className="w-full h-2 min-h-[24px] bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-white mt-1"
         />
       </div>
 
       <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950 border border-zinc-800">
-        <div>
+        <label htmlFor="setting-screen-share" className="cursor-pointer">
           <div className="font-semibold text-zinc-200">Screen Sharing</div>
           <div className="text-[11px] text-zinc-400">
             Allow members to broadcast their screen stream
           </div>
-        </div>
+        </label>
         <input
+          id="setting-screen-share"
           type="checkbox"
           checked={settings.allowScreenShare}
           onChange={(e) => onUpdate("allowScreenShare", e.target.checked)}
-          className="h-4 w-4 accent-white cursor-pointer"
+          className="h-6 w-6 min-h-[24px] min-w-[24px] accent-white cursor-pointer"
         />
       </div>
     </div>

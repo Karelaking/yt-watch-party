@@ -20,21 +20,22 @@ export function LifecycleSettings({
   return (
     <div className="space-y-4 text-xs">
       <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-950 border border-zinc-800">
-        <div>
+        <label htmlFor="setting-disconnect-host" className="cursor-pointer">
           <div className="font-semibold text-zinc-200">
             Disconnect on Host Leave
           </div>
           <div className="text-[11px] text-zinc-400">
             Automatically pause playback if the host disconnects
           </div>
-        </div>
+        </label>
         <input
+          id="setting-disconnect-host"
           type="checkbox"
           checked={settings.disconnectOnHostLeave}
           onChange={(e) =>
             onUpdate("disconnectOnHostLeave", e.target.checked)
           }
-          className="h-4 w-4 accent-white cursor-pointer"
+          className="h-6 w-6 min-h-[24px] min-w-[24px] accent-white cursor-pointer"
         />
       </div>
 

@@ -2,8 +2,7 @@
 
 import * as React from "react";
 import type { Room, RoomSettings, RoomVisibility } from "@/lib/contract-types";
-import { X, Sliders, Shield, MessageSquare, Power } from "lucide-react";
-import { GeneralSettings } from "./settings/general-settings";
+import { X, Sliders, Shield, MessageSquare, Power, Loader2 } from "lucide-react";
 import { PermissionSettings } from "./settings/permission-settings";
 import { ChatSettings } from "./settings/chat-settings";
 import { LifecycleSettings } from "./settings/lifecycle-settings";
@@ -36,7 +35,9 @@ export function RoomSettingsModal({
   );
   const [maxMembers, setMaxMembers] = React.useState(room.maxMembers);
   const [settings, setSettings] = React.useState<RoomSettings>(room.settings);
+  const [isPending, setIsPending] = React.useState(false);
   const [savedMessage, setSavedMessage] = React.useState(false);
+  const [errors, setErrors] = React.useState<{ name?: string }>({});
 
   React.useEffect(() => {
     setName(room.name);
@@ -55,21 +56,42 @@ export function RoomSettingsModal({
     setSettings((prev) => ({ ...prev, [key]: val }));
   };
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    onUpdateRoom({
-      name,
-      description,
-      visibility,
-      maxMembers,
-    });
-    onUpdateSettings(settings);
+  const validate = (): boolean => {
+    const nextErrors: { name?: string } = {};
+    if (!name.trim()) {
+      nextErrors.name = "Room title is required";
+    } else if (name.trim().length < 2) {
+      nextErrors.name = "Room title must be at least 2 characters";
+    }
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
 
-    setSavedMessage(true);
-    setTimeout(() => {
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isPending) return;
+
+    if (!validate()) {
+      return;
+    }
+
+    setIsPending(true);
+    try {
+      onUpdateRoom({
+        name: name.trim(),
+        description: description.trim(),
+        visibility,
+        maxMembers,
+      });
+      onUpdateSettings(settings);
+
+      setSavedMessage(true);
+      await new Promise((resolve) => setTimeout(resolve, 500));
       setSavedMessage(false);
       onClose();
-    }, 800);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const handleEndRoom = () => {
@@ -102,7 +124,9 @@ export function RoomSettingsModal({
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Close settings modal"
             className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
@@ -150,18 +174,125 @@ export function RoomSettingsModal({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSave} className="p-5 overflow-y-auto space-y-4 flex-1">
+        <form onSubmit={handleSave} aria-busy={isPending} className="p-5 overflow-y-auto space-y-4 flex-1">
+          {errors.name && (
+            <p role="alert" className="text-xs text-red-400 font-medium">
+              {errors.name}
+            </p>
+          )}
+
           {activeTab === "GENERAL" && (
-            <GeneralSettings
-              name={name}
-              description={description}
-              visibility={visibility}
-              maxMembers={maxMembers}
-              onNameChange={setName}
-              onDescriptionChange={setDescription}
-              onVisibilityChange={setVisibility}
-              onMaxMembersChange={setMaxMembers}
-            />
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label htmlFor="general-room-title" className="text-xs font-semibold text-zinc-300">
+                  Room Title
+                </label>
+                <input
+                  id="general-room-title"
+                  name="name"
+                  type="text"
+                  required
+                  minLength={2}
+                  maxLength={100}
+                  value={name}
+                  aria-invalid={Boolean(errors.name)}
+                  aria-describedby={errors.name ? "general-room-title-error" : undefined}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+                  }}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:border-zinc-700 outline-none focus-visible:ring-1 focus-visible:ring-zinc-600"
+                />
+                {errors.name && (
+                  <p id="general-room-title-error" role="alert" className="text-[11px] text-red-400 font-medium">
+                    {errors.name}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="general-room-desc" className="text-xs font-semibold text-zinc-300">
+                  Description (Optional)
+                </label>
+                <textarea
+                  id="general-room-desc"
+                  name="description"
+                  rows={2}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="What is this party about?"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:border-zinc-700 outline-none focus-visible:ring-1 focus-visible:ring-zinc-600 resize-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="text-xs font-semibold text-zinc-300">Visibility</div>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setVisibility("PUBLIC")}
+                    className={`p-2.5 rounded-lg border text-left flex flex-col gap-1 cursor-pointer transition-all ${
+                      visibility === "PUBLIC"
+                        ? "border-white bg-zinc-800 text-white"
+                        : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-bold text-xs">
+                      <span>Public</span>
+                    </div>
+                    <span className="text-[10px] text-zinc-400">Discoverable</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setVisibility("UNLISTED")}
+                    className={`p-2.5 rounded-lg border text-left flex flex-col gap-1 cursor-pointer transition-all ${
+                      visibility === "UNLISTED"
+                        ? "border-white bg-zinc-800 text-white"
+                        : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-bold text-xs">
+                      <span>Unlisted</span>
+                    </div>
+                    <span className="text-[10px] text-zinc-400">Invite link only</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setVisibility("PRIVATE")}
+                    className={`p-2.5 rounded-lg border text-left flex flex-col gap-1 cursor-pointer transition-all ${
+                      visibility === "PRIVATE"
+                        ? "border-white bg-zinc-800 text-white"
+                        : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-bold text-xs">
+                      <span>Private</span>
+                    </div>
+                    <span className="text-[10px] text-zinc-400">Approval needed</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="general-max-capacity" className="text-xs font-semibold text-zinc-300">
+                  Max Capacity ({maxMembers} Viewers)
+                </label>
+                <input
+                  id="general-max-capacity"
+                  name="maxMembers"
+                  aria-label="Max room viewer capacity"
+                  type="range"
+                  min={5}
+                  max={100}
+                  step={5}
+                  value={maxMembers}
+                  onChange={(e) => setMaxMembers(Number(e.target.value))}
+                  className="w-full h-2 min-h-[24px] bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-white"
+                />
+              </div>
+            </div>
           )}
 
           {activeTab === "PERMISSIONS" && (
@@ -207,9 +338,12 @@ export function RoomSettingsModal({
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs rounded-lg transition-colors cursor-pointer shadow-md"
+                disabled={isPending || !name.trim()}
+                aria-disabled={isPending || !name.trim()}
+                className="px-4 py-1.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs rounded-lg transition-colors cursor-pointer shadow-md disabled:opacity-50 inline-flex items-center gap-1.5"
               >
-                Save Changes
+                {isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+                <span>{isPending ? "Saving..." : "Save Changes"}</span>
               </button>
             </div>
           </div>

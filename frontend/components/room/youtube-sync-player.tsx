@@ -97,6 +97,7 @@ export function YouTubeSyncPlayer({
   const [playbackRate, setPlaybackRate] = React.useState(playbackState.playbackRate || 1.0);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [newVideoUrl, setNewVideoUrl] = React.useState("");
+  const [isPending, setIsPending] = React.useState(false);
   const [showUrlInput, setShowUrlInput] = React.useState(false);
   const [showSpeedMenu, setShowSpeedMenu] = React.useState(false);
   const [viewMode, setViewMode] = React.useState<"MEDIA" | "SCREEN">("MEDIA");
@@ -733,15 +734,20 @@ export function YouTubeSyncPlayer({
   });
 
   const handleUrlSubmit = React.useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
       const trimmed = newVideoUrl.trim();
-      if (!trimmed) return;
-      callbacksRef.current.onChangeVideo(trimmed);
-      setNewVideoUrl("");
-      setShowUrlInput(false);
+      if (!trimmed || isPending) return;
+      setIsPending(true);
+      try {
+        await Promise.resolve(callbacksRef.current.onChangeVideo(trimmed));
+        setNewVideoUrl("");
+        setShowUrlInput(false);
+      } finally {
+        setIsPending(false);
+      }
     },
-    [newVideoUrl]
+    [newVideoUrl, isPending]
   );
 
   const handleScrubberMouseMove = React.useCallback(
@@ -796,21 +802,32 @@ export function YouTubeSyncPlayer({
       {showUrlInput && (
         <form
           onSubmit={handleUrlSubmit}
+          aria-busy={isPending}
           className="p-2.5 bg-zinc-900 border-b border-zinc-800 flex items-center gap-2 z-30"
         >
+          <label htmlFor="switcher-video-url" className="sr-only">
+            Switch video URL
+          </label>
           <input
+            id="switcher-video-url"
+            aria-label="Switch video URL"
             type="url"
             required
+            disabled={isPending}
             value={newVideoUrl}
             onChange={(e) => setNewVideoUrl(e.target.value)}
             placeholder="Paste YouTube, Twitch, Vimeo, or direct MP4 URL..."
-            className="flex-1 bg-zinc-950 border border-zinc-700 text-white rounded-lg px-3 py-1.5 text-xs outline-none focus:border-zinc-500 font-mono"
+            className="flex-1 bg-zinc-950 border border-zinc-700 text-white rounded-lg px-3 py-1.5 text-xs outline-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 font-mono disabled:opacity-60"
           />
           <button
             type="submit"
-            className="bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            disabled={isPending || !newVideoUrl.trim()}
+            aria-disabled={isPending || !newVideoUrl.trim()}
+            className="bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
           >
-            Change Video
+            <span role="status" aria-live="polite">
+              {isPending ? "Changing Video..." : "Change Video"}
+            </span>
           </button>
         </form>
       )}
@@ -849,9 +866,11 @@ export function YouTubeSyncPlayer({
 
         {/* Click to Sync / Autoplay Unblock Overlay */}
         {needsInteraction && playbackState.isPlaying && (
-          <div
+          <button
+            type="button"
             onClick={handleInteractiveSync}
-            className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm cursor-pointer transition-all hover:bg-black/50"
+            aria-label="Click to sync audio and video with the watch party"
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm cursor-pointer transition-all hover:bg-black/50 border-none w-full h-full text-left"
           >
             <div className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-zinc-900/95 border border-zinc-700/80 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
               <div className="w-14 h-14 rounded-full bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-400">
@@ -861,14 +880,13 @@ export function YouTubeSyncPlayer({
                 <p className="text-sm font-semibold text-white">Live Stream is Playing</p>
                 <p className="text-xs text-zinc-400 mt-1">Click anywhere to sync audio & video</p>
               </div>
-              <button
-                type="button"
-                className="mt-2 px-5 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs shadow-lg transition-colors cursor-pointer"
+              <span
+                className="mt-2 px-5 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs shadow-lg transition-colors inline-block"
               >
                 Sync with Room
-              </button>
+              </span>
             </div>
-          </div>
+          </button>
         )}
 
         {/* Floating Reactions Overlay */}

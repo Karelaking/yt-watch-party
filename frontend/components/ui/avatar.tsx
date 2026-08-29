@@ -21,9 +21,8 @@ const avatarVariants = cva(
   }
 );
 
-export interface AvatarProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof avatarVariants> {}
+export type AvatarProps = React.HTMLAttributes<HTMLDivElement> &
+  VariantProps<typeof avatarVariants>;
 
 const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
   ({ className, size, ...props }, ref): React.JSX.Element => (
@@ -71,8 +70,7 @@ const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
 );
 AvatarImage.displayName = "AvatarImage";
 
-export interface AvatarFallbackProps
-  extends React.HTMLAttributes<HTMLDivElement> {}
+export type AvatarFallbackProps = React.HTMLAttributes<HTMLDivElement>;
 
 const AvatarFallback = React.forwardRef<HTMLDivElement, AvatarFallbackProps>(
   ({ className, children, ...props }, ref): React.JSX.Element => (
