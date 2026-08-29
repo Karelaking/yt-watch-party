@@ -63,14 +63,14 @@ export function GlassNav({ className, ...props }: GlassNavProps): React.JSX.Elem
         )}
       >
         {/* Brand Logo */}
-        <a href="#" className="flex items-center gap-2 sm:gap-2.5 group cursor-pointer">
+        <Link href="/" aria-label="WatchParty Home" className="flex items-center gap-2 sm:gap-2.5 group cursor-pointer">
           <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center font-bold text-xs shadow-xs transition-transform duration-300 group-hover:scale-105">
             <Play className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-current ml-0.5" />
           </div>
           <span className="font-bold text-sm sm:text-base tracking-tight text-zinc-950 dark:text-white group-hover:text-zinc-700 dark:group-hover:text-zinc-200 transition-colors">
             WatchParty
           </span>
-        </a>
+        </Link>
 
         {/* Desktop Nav Items */}
         <nav

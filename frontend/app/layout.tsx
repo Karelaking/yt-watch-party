@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import dynamic from "next/dynamic";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProviderWrapper } from "@/components/providers/clerk-provider-wrapper";
@@ -26,6 +26,15 @@ const geistMono = Geist_Mono({
   display: "swap",
   preload: true,
 });
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+};
 
 const siteUrl =
   process.env.NEXT_PUBLIC_APP_URL || "https://watchparty-yt.vercel.app";
