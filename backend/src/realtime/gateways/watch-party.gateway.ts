@@ -19,6 +19,17 @@ import type { ISessionAccumulatorService } from '../../infrastructure/redis/sess
 import { RedisKeys } from '../../infrastructure/redis/redis-keys.js';
 import { DomainEventType } from '../../core/events/index.js';
 import { Permission, type RoomRole } from '../../modules/rbac/permissions.js';
+import { Participant } from '../domain/participant.js';
+import { Room } from '../domain/room.js';
+import { RoomManager } from '../domain/room-manager.js';
+import {
+  PlaybackActionHandler,
+  ChatMessageHandler,
+  ReactionHandler,
+  NicknameUpdateHandler,
+  SettingsUpdateHandler,
+  PlaylistActionHandler,
+} from '../domain/handlers/index.js';
 
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>;
 type TypedServer = Server<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>;
@@ -28,6 +39,20 @@ export class WatchPartyGateway {
   private readonly roomCache = new Map<string, { data: any; expiresAt: number }>();
   private readonly settingsCache = new Map<string, { data: any; expiresAt: number }>();
   private readonly banCache = new Map<string, { bannedUserIds: Set<string>; expiresAt: number }>();
+
+  /** In-memory registry of connected Participant domain objects, keyed by socket ID */
+  private readonly participants = new Map<string, Participant>();
+
+  /** In-memory registry of active Room domain objects */
+  private readonly roomManager = new RoomManager();
+
+  // Domain MessageHandlers
+  private readonly playbackActionHandler: PlaybackActionHandler;
+  private readonly chatMessageHandler: ChatMessageHandler;
+  private readonly reactionHandler: ReactionHandler;
+  private readonly nicknameUpdateHandler: NicknameUpdateHandler;
+  private readonly settingsUpdateHandler: SettingsUpdateHandler;
+  private readonly playlistActionHandler: PlaylistActionHandler;
 
   constructor(
     private readonly io: TypedServer,
@@ -46,6 +71,67 @@ export class WatchPartyGateway {
     private readonly roomPubSubService?: IRoomPubSubService,
     private readonly sessionAccumulator?: ISessionAccumulatorService
   ) {
+    const roomResolver = async (roomIdOrCode: string) => {
+      const roomEntity = await this.resolveRoom(roomIdOrCode);
+      if (!roomEntity) return null;
+      const settings = await this.getSettingsCached(roomEntity.id);
+      return this.roomManager.getOrCreate(roomEntity, settings);
+    };
+
+    this.playbackActionHandler = new PlaybackActionHandler(
+      this.roomManager,
+      this.participants,
+      this.rbacEngine,
+      this.playbackService,
+      this.lockService,
+      this.roomPubSubService,
+      roomResolver,
+    );
+
+    this.chatMessageHandler = new ChatMessageHandler(
+      this.roomManager,
+      this.participants,
+      this.rbacEngine,
+      this.chatService,
+      this.roomPubSubService,
+      roomResolver,
+    );
+
+    this.reactionHandler = new ReactionHandler(
+      this.roomManager,
+      this.participants,
+      this.rbacEngine,
+      this.roomPubSubService,
+      roomResolver,
+    );
+
+    this.nicknameUpdateHandler = new NicknameUpdateHandler(
+      this.roomManager,
+      this.participants,
+      this.rbacEngine,
+      this.membershipRepository,
+      this.roomPubSubService,
+      roomResolver,
+    );
+
+    this.settingsUpdateHandler = new SettingsUpdateHandler(
+      this.roomManager,
+      this.participants,
+      this.rbacEngine,
+      this.settingsRepository,
+      this.roomPubSubService,
+      roomResolver,
+    );
+
+    this.playlistActionHandler = new PlaylistActionHandler(
+      this.roomManager,
+      this.participants,
+      this.rbacEngine,
+      this.playlistService,
+      this.roomPubSubService,
+      roomResolver,
+    );
+
     this.registerEventSubscriptions();
     this.registerSocketHandlers();
   }
@@ -288,14 +374,19 @@ export class WatchPartyGateway {
           socket.data.role = resolvedRole;
           socket.data.isOwner = isOwner;
 
+          // Create and register Participant domain object
+          const participant = Participant.fromAuthContext(user, socket.id, resolvedRole, isOwner, membership?.nickname);
+          this.participants.set(socket.id, participant);
+
+          // Register participant in Room domain object
+          const settings = await this.getSettingsCached(canonicalRoomId);
+          const activeRoom = this.roomManager.getOrCreate(room, settings);
+          activeRoom.addParticipant(participant);
+
           const currentState = await this.playbackService.getState(canonicalRoomId);
 
           callback?.({ success: true, state: currentState });
-          socket.to(channel).emit('room:member_joined', {
-            userId: user.id,
-            role: resolvedRole,
-            displayName: user.displayName,
-          });
+          socket.to(channel).emit('room:member_joined', participant.toMemberPayload());
         } catch (err) {
           console.error('[Socket room:join] error:', err);
           callback?.({ success: false, error: 'Failed to join room' });
@@ -304,235 +395,27 @@ export class WatchPartyGateway {
 
       // Handle playback action (Play, Pause, Seek, Rate, Media) with Distributed Locking
       socket.on('playback:action', async (data, callback) => {
-        try {
-          const { roomId, action, position, playbackRate, mediaId } = data;
-          const room = await this.resolveRoom(roomId);
-          if (!room) {
-            callback?.({ success: false, error: 'Room not found' });
-            return;
-          }
-
-          const canonicalRoomId = room.id;
-
-          // Check RBAC permission for PLAYBACK_CONTROL using cached settings & socket role
-          const settings = await this.getSettingsCached(canonicalRoomId);
-          const isOwner = socket.data.isOwner !== undefined ? socket.data.isOwner : (room.ownerId === user.id || room.ownerId === user.clerkUserId);
-          const role: RoomRole = isOwner
-            ? 'HOST'
-            : ((socket.data.role as RoomRole) || (settings?.onlyHostCanControlPlayback ? 'VIEWER' : 'PARTICIPANT'));
-
-          const isAllowed = this.rbacEngine.can(role, settings, Permission.PLAYBACK_CONTROL);
-          if (!isAllowed) {
-            callback?.({ success: false, error: 'Permission denied for playback control' });
-            return;
-          }
-
-          // Execute with Redis distributed lock to prevent concurrency race conditions
-          const lockKey = RedisKeys.lockPlayback(canonicalRoomId);
-          const updatedState = await this.lockService.withLock(lockKey, 3000, async () => {
-            return this.playbackService.dispatchAction(canonicalRoomId, user.id, {
-              action,
-              position,
-              playbackRate,
-              mediaId,
-            });
-          });
-
-          // Broadcast authoritative sync to all room members
-          this.io.to(`room:${canonicalRoomId}`).emit('playback:sync', updatedState);
-          callback?.({ success: true, state: updatedState });
-        } catch (err) {
-          console.error('[Socket playback:action] error:', err);
-          callback?.({ success: false, error: err instanceof Error ? err.message : 'Action failed' });
-        }
+        await this.playbackActionHandler.handle(this.io, socket, data, callback);
       });
 
       // Handle playlist actions (Add, Remove, Reorder)
       socket.on('playlist:action', async (data, callback) => {
-        try {
-          const { roomId, playlistId, action, payload } = data;
-          if (!this.playlistService) {
-            callback?.({ success: false, error: 'Playlist service unavailable' });
-            return;
-          }
-
-          const room = await this.resolveRoom(roomId);
-          if (!room) {
-            callback?.({ success: false, error: 'Room not found' });
-            return;
-          }
-
-          const canonicalRoomId = room.id;
-          const settings = await this.settingsRepository.findByRoomId(canonicalRoomId);
-          const membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.id);
-          const isOwner = room.ownerId === user.id || room.ownerId === user.clerkUserId;
-          const role: RoomRole = isOwner
-            ? 'HOST'
-            : (membership?.role || (settings?.onlyHostCanManagePlaylist ? 'VIEWER' : 'PARTICIPANT'));
-
-          const isAllowed = this.rbacEngine.can(role, settings, Permission.PLAYLIST_MANAGE);
-          if (!isAllowed) {
-            callback?.({ success: false, error: 'Permission denied to manage playlist' });
-            return;
-          }
-
-          const defaultPl = await this.playlistService.getOrCreateDefaultPlaylist(canonicalRoomId, user.id);
-          const targetPlaylistId = playlistId || defaultPl.id;
-
-          if (action === 'ADD') {
-            const addPayload = payload as { url?: string; mediaUrl?: string; mediaId?: string; title?: string };
-            const urlToAdd = addPayload.url || addPayload.mediaUrl || '';
-            await this.playlistService.addItem(canonicalRoomId, targetPlaylistId, user.id, {
-              url: urlToAdd,
-              mediaId: addPayload.mediaId,
-              title: addPayload.title,
-            });
-          } else if (action === 'REMOVE') {
-            const removePayload = payload as { itemId: string };
-            await this.playlistService.removeItem(removePayload.itemId);
-          } else if (action === 'REORDER') {
-            const reorderPayload = payload as { itemIds: string[] };
-            await this.playlistService.reorderItems(targetPlaylistId, reorderPayload.itemIds);
-          }
-
-          const updatedPlaylist = await this.playlistService.getPlaylist(targetPlaylistId);
-          const playlistPayload = {
-            playlistId: targetPlaylistId,
-            items: updatedPlaylist.items || [],
-          };
-
-          if (this.roomPubSubService) {
-            await this.roomPubSubService.publish(canonicalRoomId, 'PLAYLIST_SYNC', playlistPayload, user.id);
-          }
-          this.io.to(`room:${canonicalRoomId}`).emit('playlist:sync', playlistPayload);
-
-          callback?.({ success: true, playlist: updatedPlaylist } as any);
-        } catch (err) {
-          console.error('[Socket playlist:action] error:', err);
-          callback?.({ success: false, error: err instanceof Error ? err.message : 'Playlist action failed' });
-        }
+        await this.playlistActionHandler.handle(this.io, socket, data, callback);
       });
 
       // Handle live floating emoji reactions with burst throttling
       socket.on('room:reaction', async (data) => {
-        try {
-          const { roomId, emoji } = data;
-          if (!roomId || !emoji) return;
-
-          const now = Date.now();
-          if (socket.data.lastReactionAt && now - socket.data.lastReactionAt < 100) {
-            return; // Throttle clicks faster than 100ms
-          }
-          socket.data.lastReactionAt = now;
-
-          const room = await this.resolveRoom(roomId);
-          const canonicalRoomId = room ? room.id : roomId;
-
-          let membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.id);
-          if (!membership && user.clerkUserId) {
-            membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.clerkUserId);
-          }
-
-          const effectiveNickname =
-            membership?.nickname ||
-            (data as any).userName ||
-            user.displayName ||
-            (user.email ? user.email.split('@')[0] : 'Member');
-
-          const reactionPayload = {
-            userId: user.id,
-            userName: effectiveNickname,
-            emoji,
-          };
-
-          if (this.roomPubSubService) {
-            this.roomPubSubService.publish(canonicalRoomId, 'ROOM_REACTION', reactionPayload, user.id).catch(() => {});
-          }
-          this.io.to(`room:${canonicalRoomId}`).emit('room:reaction', reactionPayload);
-        } catch (err) {
-          console.warn('[Socket room:reaction warning]:', err);
-        }
+        await this.reactionHandler.handle(this.io, socket, data);
       });
 
       // Handle live nickname update
       socket.on('room:nickname', async (data, callback) => {
-        try {
-          const { roomId, nickname } = data;
-          if (!roomId || !nickname || typeof nickname !== 'string') {
-            callback?.({ success: false, error: 'Invalid nickname payload' });
-            return;
-          }
-
-          const room = await this.resolveRoom(roomId);
-          if (!room) {
-            callback?.({ success: false, error: 'Room not found' });
-            return;
-          }
-
-          const canonicalRoomId = room.id;
-          const membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.id);
-          if (membership) {
-            await this.membershipRepository.updateNickname(membership.id, nickname.trim());
-          }
-
-          const updatePayload = {
-            userId: user.id,
-            nickname: nickname.trim(),
-            displayName: nickname.trim(),
-          };
-
-          if (this.roomPubSubService) {
-            await this.roomPubSubService.publish(canonicalRoomId, 'ROOM_MEMBER_UPDATED', updatePayload, user.id);
-          } else {
-            this.io.to(`room:${canonicalRoomId}`).emit('room:member_updated', updatePayload);
-          }
-
-          callback?.({ success: true });
-        } catch (err) {
-          console.error('[Socket room:nickname] error:', err);
-          callback?.({ success: false, error: 'Failed to update nickname' });
-        }
+        await this.nicknameUpdateHandler.handle(this.io, socket, data, callback);
       });
 
       // Handle live room settings update
       socket.on('room:settings_update', async (data, callback) => {
-        try {
-          const { roomId, settings } = data;
-          const room = await this.resolveRoom(roomId);
-          if (!room) {
-            callback?.({ success: false, error: 'Room not found' });
-            return;
-          }
-
-          const canonicalRoomId = room.id;
-          const isOwner = room.ownerId === user.id || room.ownerId === user.clerkUserId;
-          if (!isOwner) {
-            callback?.({ success: false, error: 'Only room host can modify settings' });
-            return;
-          }
-
-          const updated = await this.settingsRepository.update(canonicalRoomId, settings as any);
-          
-          // Invalidate cache
-          this.settingsCache.delete(canonicalRoomId);
-          this.roomCache.delete(canonicalRoomId);
-
-          const settingsPayload = {
-            roomId: canonicalRoomId,
-            settings: updated,
-          };
-
-          if (this.roomPubSubService) {
-            await this.roomPubSubService.publish(canonicalRoomId, 'ROOM_SETTINGS_UPDATED', settingsPayload, user.id);
-          } else {
-            this.io.to(`room:${canonicalRoomId}`).emit('room:settings_updated', settingsPayload);
-          }
-
-          callback?.({ success: true });
-        } catch (err) {
-          console.error('[Socket room:settings_update] error:', err);
-          callback?.({ success: false, error: 'Settings update failed' });
-        }
+        await this.settingsUpdateHandler.handle(this.io, socket, data, callback);
       });
 
       // Handle heartbeat via Session Accumulator
@@ -548,53 +431,7 @@ export class WatchPartyGateway {
 
       // Handle chat messages with MongoDB persistence, nickname resolution, and rate limiting
       socket.on('chat:send', async (data) => {
-        try {
-          const { roomId, text } = data;
-          if (!text || text.trim().length === 0) return;
-
-          const room = await this.resolveRoom(roomId);
-          const canonicalRoomId = room ? room.id : roomId;
-
-          // Resolve member nickname and role
-          let membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.id);
-          if (!membership && user.clerkUserId) {
-            membership = await this.membershipRepository.findByRoomAndUser(canonicalRoomId, user.clerkUserId);
-          }
-
-          const effectiveNickname =
-            membership?.nickname ||
-            data.userNickname ||
-            data.userName ||
-            user.displayName ||
-            (user.email ? user.email.split('@')[0] : 'Member');
-
-          const isHost = room ? (room.ownerId === user.id || room.ownerId === user.clerkUserId) : false;
-          const userRole = isHost ? 'HOST' : (membership?.role || 'PARTICIPANT');
-
-          const savedMessage = await this.chatService.sendMessage(user.id, {
-            roomId: canonicalRoomId,
-            message: text.trim(),
-            type: 'TEXT',
-          });
-
-          const messagePayload = {
-            id: savedMessage.id,
-            senderId: user.id,
-            senderName: effectiveNickname,
-            userNickname: effectiveNickname,
-            userRole,
-            userAvatar: user.avatarUrl || null,
-            text: savedMessage.message,
-            sentAt: savedMessage.createdAt.toISOString(),
-          };
-
-          if (this.roomPubSubService) {
-            this.roomPubSubService.publish(canonicalRoomId, 'CHAT_MESSAGE' as any, messagePayload, user.id).catch(() => {});
-          }
-          this.io.to(`room:${canonicalRoomId}`).emit('chat:message', messagePayload);
-        } catch (err) {
-          console.warn('[Socket chat:send warning]:', err instanceof Error ? err.message : err);
-        }
+        await this.chatMessageHandler.handle(this.io, socket, data);
       });
 
       // Handle WebRTC Screen Sharing signaling (with RBAC authorization)
@@ -637,6 +474,14 @@ export class WatchPartyGateway {
           // Clean up Redis presence
           await this.presenceCache.removeSocket(socket.id);
 
+          // Remove Participant from domain objects
+          this.participants.delete(socket.id);
+          const activeRoomObj = this.roomManager.get(canonicalRoomId);
+          if (activeRoomObj) {
+            activeRoomObj.removeParticipant(socket.id);
+            this.roomManager.cleanupIfEmpty(canonicalRoomId);
+          }
+
           // End watch session and flush accumulated time
           if (socket.data.watchSessionId) {
             if (this.sessionAccumulator) {
@@ -663,6 +508,17 @@ export class WatchPartyGateway {
       socket.on('disconnect', async () => {
         const { roomId } = await this.presenceCache.removeSocket(socket.id);
 
+        // Remove Participant from domain objects
+        this.participants.delete(socket.id);
+        const disconnectRoomId = roomId || socket.data.currentRoomId;
+        if (disconnectRoomId) {
+          const activeRoomObj = this.roomManager.get(disconnectRoomId);
+          if (activeRoomObj) {
+            activeRoomObj.removeParticipant(socket.id);
+            this.roomManager.cleanupIfEmpty(disconnectRoomId);
+          }
+        }
+
         if (socket.data.watchSessionId) {
           if (this.sessionAccumulator) {
             await this.sessionAccumulator.flushSession(socket.data.watchSessionId);
@@ -670,9 +526,8 @@ export class WatchPartyGateway {
           await this.sessionRepository.endWatchSession(socket.data.watchSessionId);
         }
 
-        const activeRoom = roomId || socket.data.currentRoomId;
-        if (activeRoom) {
-          socket.to(`room:${activeRoom}`).emit('room:member_left', {
+        if (disconnectRoomId) {
+          socket.to(`room:${disconnectRoomId}`).emit('room:member_left', {
             userId: user.id,
           });
         }
