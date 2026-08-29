@@ -31,8 +31,14 @@ function ThemeHotkeyListener(): null {
 
       if (isModShiftD || isBareD) {
         event.preventDefault();
-        const current = resolvedTheme || theme || "light";
-        setTheme(current === "dark" ? "light" : "dark");
+        // Cycle: system -> light -> dark -> system
+        if (theme === "system") {
+          setTheme("light");
+        } else if (theme === "light") {
+          setTheme("dark");
+        } else {
+          setTheme("system");
+        }
       }
     };
 
@@ -48,8 +54,10 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.JSX.Eleme
     <NextThemesProvider
       attribute="class"
       defaultTheme="system"
-      enableSystem
+      enableSystem={true}
+      enableColorScheme={true}
       disableTransitionOnChange
+      storageKey="watchparty-theme"
     >
       <ThemeHotkeyListener />
       {children}

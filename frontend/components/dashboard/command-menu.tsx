@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Plus, Tv, Moon, Sun, Home, ArrowRight } from "lucide-react";
+import { Plus, Tv, Moon, Sun, Laptop, Home, ArrowRight } from "lucide-react";
 import type { Room } from "@/lib/contract-types";
 import {
   CommandDialog,
@@ -68,13 +68,24 @@ export function CommandMenu({
       },
     },
     {
-      id: "action-theme",
+      id: "action-theme-toggle",
       title: currentTheme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode",
-      subtitle: "Toggle application theme",
+      subtitle: `Currently ${theme === "system" ? "System (" + currentTheme + ")" : currentTheme}`,
       icon: currentTheme === "dark" ? Sun : Moon,
       shortcut: "⌘T",
       onSelect: () => {
         setTheme(currentTheme === "dark" ? "light" : "dark");
+        onClose();
+      },
+    },
+    {
+      id: "action-theme-system",
+      title: "Use System Theme",
+      subtitle: "Automatically sync with device operating system theme",
+      icon: Laptop,
+      shortcut: "⌘S",
+      onSelect: () => {
+        setTheme("system");
         onClose();
       },
     },
