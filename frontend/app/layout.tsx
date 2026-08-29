@@ -15,10 +15,73 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import { JsonLdSchema } from "@/components/seo/json-ld";
+
+const siteUrl =
+  process.env.NEXT_PUBLIC_APP_URL || "https://watchparty-yt.vercel.app";
+
 export const metadata: Metadata = {
-  title: "WatchParty — Watch YouTube Together in Real-Time Sync",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "WatchParty — Watch YouTube Together in Real-Time Sync (No Extension)",
+    template: "%s | WatchParty",
+  },
   description:
-    "Create watch parties, sync YouTube videos with frame-perfect precision, chat with friends, and share creative moments seamlessly.",
+    "Host synchronized YouTube watch parties with friends in real-time. Sub-15ms frame-perfect sync, live interactive chat, floating emoji reactions, and host controls. Zero downloads or extensions required.",
+  keywords: [
+    "YouTube Watch Party",
+    "Watch YouTube Together",
+    "Sync YouTube Videos",
+    "Watch Together Online",
+    "Long Distance Movie Night",
+    "Synchronized Video Player",
+    "Watch2Gether Alternative",
+    "Teleparty Alternative No Extension",
+    "Real-time Video Sync",
+    "Watch Party App",
+  ],
+  authors: [{ name: "WatchParty Team" }],
+  creator: "WatchParty",
+  publisher: "WatchParty",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteUrl,
+    siteName: "WatchParty",
+    title: "WatchParty — Watch YouTube Together in Frame-Perfect Sync",
+    description:
+      "Create instant watch party rooms. Watch YouTube videos perfectly synchronized with friends across mobile, desktop, and smart TVs with real-time chat and emoji reactions.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "WatchParty — Watch YouTube Together in Real-Time Sync",
+    description:
+      "Host instant YouTube watch parties with zero extensions. Frame-perfect playback, live chat, and reactions.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+  },
+  category: "entertainment",
 };
 
 export default function RootLayout({
@@ -33,7 +96,9 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased scroll-smooth`}
     >
-
+      <head>
+        <JsonLdSchema />
+      </head>
       <body
         suppressHydrationWarning
         className="min-h-full flex flex-col bg-background text-foreground bg-dot-pattern selection:bg-zinc-900 selection:text-white"

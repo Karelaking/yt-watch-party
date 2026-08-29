@@ -7,24 +7,34 @@ export const DEFAULT_FALLBACK_VIDEO_ID = "jfKfPfyJRdk";
 
 export const FAQ_ITEMS = [
   {
-    question: "Do all participants need a YouTube account or extension?",
+    question: "Do all participants need a YouTube account or browser extension?",
     answer:
-      "No! WatchParty runs directly in any modern browser without extensions or mandatory logins. Just send your room link and everyone can start watching in sync immediately.",
+      "No! WatchParty runs 100% directly in any modern browser without requiring browser extensions, plugins, or software installations. Just send your room link and everyone can start watching in sync immediately.",
   },
   {
-    question: "How does WatchParty maintain frame-perfect sync?",
+    question: "How does WatchParty maintain sub-15ms frame-perfect sync?",
     answer:
-      "Our WebSocket + WebRTC hybrid clock synchronization system calibrates round-trip network latency every 500ms, keeping everyone's playback within 15 milliseconds of each other.",
+      "Our WebSocket and Redis-backed clock synchronization system continuously calibrates round-trip network latency every 500ms, keeping everyone's playback within 15 milliseconds of each other with zero drift.",
   },
   {
-    question: "Can anyone pause, seek, or change the video?",
+    question: "Can I control who can pause, seek, or change YouTube videos?",
     answer:
-      "As the host, you have full control over room permissions. You can enable Host-Only control, Open DJ mode (where anyone can queue/pause), or Voting mode for playlist changes.",
+      "Yes! As room host, you have full Role-Based Access Control (RBAC). Choose between Host-Only playback control, Open DJ mode (where anyone can queue/pause), or Voting mode for democratic playlist changes.",
   },
   {
-    question: "Is there a limit on how many friends can join a room?",
+    question: "Does WatchParty work on mobile phones and tablets?",
     answer:
-      "Our free public tier supports up to 50 simultaneous viewers per room with crystal clear chat and zero audio delay.",
+      "Yes! WatchParty is fully responsive and optimized for Safari on iOS (iPhone/iPad), Chrome on Android, desktop browsers (Mac, Windows, Linux), and smart TVs without installing an app.",
+  },
+  {
+    question: "Is WatchParty free to use?",
+    answer:
+      "Yes, WatchParty is 100% free with unlimited watch rooms, supporting up to 50 simultaneous viewers per room with instant chat and live emoji reactions.",
+  },
+  {
+    question: "Can we watch YouTube livestreams and playlists together?",
+    answer:
+      "Yes! You can paste URLs for standard YouTube videos, YouTube Music, premiere videos, and public YouTube livestreams for synchronized co-watching.",
   },
 ] as const;
 
