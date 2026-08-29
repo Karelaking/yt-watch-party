@@ -1,11 +1,20 @@
 import * as React from "react";
 import { SignUp } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { AuthContainer } from "@/components/auth/auth-container";
 
-export default function SignUpPage(): React.JSX.Element {
+export default async function SignUpPage(): Promise<React.JSX.Element> {
+  const { userId } = await auth();
+  if (userId) {
+    redirect("/dashboard");
+  }
+
   return (
     <AuthContainer mode="sign-up">
       <SignUp
+        fallbackRedirectUrl="/dashboard"
+        signInFallbackRedirectUrl="/dashboard"
         appearance={{
           elements: {
             rootBox: "w-full",

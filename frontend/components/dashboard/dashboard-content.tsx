@@ -20,8 +20,14 @@ interface ApiResponse<T> {
 export function DashboardContent(): React.JSX.Element {
   const router = useRouter();
   const { user } = useUser();
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const { rooms, error: roomsError } = useRooms();
+
+  React.useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.push("/sign-in?redirect_url=/dashboard");
+    }
+  }, [isLoaded, isSignedIn, router]);
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [activeTab, setActiveTab] = React.useState<"ALL" | "PUBLIC" | "MY_ROOMS">("ALL");

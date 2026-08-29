@@ -1,4 +1,6 @@
 import * as React from "react";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { GlassNav } from "@/components/ds/glass-nav";
 import { ScrollReveal } from "@/components/ds/scroll-reveal";
 import {
@@ -14,7 +16,12 @@ import {
   Footer,
 } from "@/components/landing";
 
-export default function Home(): React.JSX.Element {
+export default async function Home(): Promise<React.JSX.Element> {
+  const { userId } = await auth();
+  if (userId) {
+    redirect("/dashboard");
+  }
+
   return (
     <div className="flex flex-col min-h-screen selection:bg-zinc-900 selection:text-white">
       {/* Top Floating Glass Capsule Navigation */}

@@ -11,7 +11,13 @@ export function ClerkProviderWrapper({
   children: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <ClerkProvider appearance={{ theme: shadcn }}>
+    <ClerkProvider
+      appearance={{ theme: shadcn }}
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+    >
       <SocketProvider>{children}</SocketProvider>
     </ClerkProvider>
   );
