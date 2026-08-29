@@ -54,7 +54,7 @@ export function RoomCard({ room }: RoomCardProps): React.JSX.Element {
   };
 
   return (
-    <div className="group bg-white rounded-xl border border-zinc-200 hover:border-zinc-300 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden select-none">
+    <div className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden select-none">
       {/* Video Thumbnail Viewport */}
       <div className="relative aspect-video w-full bg-zinc-950 overflow-hidden">
         {currentMedia?.thumbnailUrl ? (
@@ -104,19 +104,19 @@ export function RoomCard({ room }: RoomCardProps): React.JSX.Element {
       {/* Card Info */}
       <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
         <div className="space-y-1">
-          <h3 className="font-bold text-sm tracking-tight text-zinc-950 line-clamp-1 group-hover:text-zinc-700 transition-colors">
+          <h3 className="font-bold text-sm tracking-tight text-zinc-950 dark:text-white line-clamp-1 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
             {room.name}
           </h3>
 
-          <p className="text-xs text-zinc-500 line-clamp-1">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1">
             {currentMedia?.title || room.description || "Active synchronized watch session"}
           </p>
         </div>
 
         {/* Footer Meta & Actions */}
-        <div className="pt-3 border-t border-zinc-100 flex items-center justify-between gap-2">
+        <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
           {/* Watchers */}
-          <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-medium">
+          <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
             <Users className="w-3.5 h-3.5 text-zinc-400" />
             <span>{room.memberships.length} watchers</span>
           </div>
@@ -127,7 +127,7 @@ export function RoomCard({ room }: RoomCardProps): React.JSX.Element {
                 onClick={handleDeleteRoom}
                 disabled={isDeleting}
                 title="Delete Room"
-                className="p-1.5 rounded-lg border border-red-200 hover:bg-red-50 text-red-600 transition-colors cursor-pointer disabled:opacity-50"
+                className="p-1.5 rounded-lg border border-red-200 dark:border-red-900/60 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 transition-colors cursor-pointer disabled:opacity-50"
               >
                 {isDeleting ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -140,10 +140,10 @@ export function RoomCard({ room }: RoomCardProps): React.JSX.Element {
             <button
               onClick={handleCopyCode}
               title="Copy invite link"
-              className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 text-zinc-600 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors cursor-pointer"
             >
               {copied ? (
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               ) : (
                 <Copy className="w-3.5 h-3.5" />
               )}
@@ -151,7 +151,7 @@ export function RoomCard({ room }: RoomCardProps): React.JSX.Element {
 
             <Link
               href={`/room/${room.id}`}
-              className="inline-flex items-center gap-1 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1 bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shadow-2xs"
             >
               <span>Join</span>
               <ArrowUpRight className="w-3 h-3" />

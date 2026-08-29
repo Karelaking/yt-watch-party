@@ -176,7 +176,7 @@ export function DashboardContent(): React.JSX.Element {
   const totalMembers = rooms.reduce((acc, r) => acc + (r.memberships?.length || 0), 0);
 
   return (
-    <div className="min-h-screen flex flex-col bg-zinc-50/50 text-zinc-950 font-sans selection:bg-zinc-900 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-zinc-50/50 dark:bg-zinc-950 text-zinc-950 dark:text-zinc-100 font-sans selection:bg-zinc-900 selection:text-white">
       {/* Top Navbar */}
       <DashboardNav
         onCreateClick={() => setIsCreateModalOpen(true)}

@@ -121,13 +121,13 @@ export function CreateRoomModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white rounded-2xl border border-zinc-200 w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150 select-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-800 w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150 select-none">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
           <div>
-            <h2 className="font-bold text-sm text-zinc-950">Create Watch Room</h2>
-            <p className="text-xs text-zinc-500">
+            <h2 className="font-bold text-sm text-zinc-950 dark:text-white">Create Watch Room</h2>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Start a synchronized streaming session
             </p>
           </div>
@@ -135,7 +135,7 @@ export function CreateRoomModal({
             type="button"
             onClick={onClose}
             aria-label="Close create room modal"
-            className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
+            className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -143,7 +143,7 @@ export function CreateRoomModal({
 
         {/* Error Notification */}
         {errorMsg && (
-          <div className="mx-5 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
+          <div className="mx-5 mt-4 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-lg text-xs text-red-700 dark:text-red-300">
             {errorMsg}
           </div>
         )}
@@ -154,7 +154,7 @@ export function CreateRoomModal({
           <div className="space-y-1">
             <label
               htmlFor="create-room-title"
-              className="text-xs font-semibold text-zinc-800"
+              className="text-xs font-semibold text-zinc-800 dark:text-zinc-200"
             >
               Room Title
             </label>
@@ -165,7 +165,7 @@ export function CreateRoomModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Lofi Chill Lounge"
-              className="w-full bg-zinc-50 border border-zinc-200 focus:bg-white rounded-lg px-3 py-2 text-xs text-zinc-900 focus:border-zinc-950 focus:ring-1 focus:ring-zinc-950 outline-none transition-all"
+              className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:bg-white dark:focus:bg-zinc-900 rounded-lg px-3 py-2 text-xs text-zinc-900 dark:text-white focus:border-zinc-950 dark:focus:border-zinc-600 focus:ring-1 focus:ring-zinc-950 dark:focus:ring-zinc-600 outline-none transition-all"
             />
           </div>
 
@@ -173,7 +173,7 @@ export function CreateRoomModal({
           <div className="space-y-1">
             <label
               htmlFor="create-youtube-url"
-              className="text-xs font-semibold text-zinc-800 flex items-center gap-1.5"
+              className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5"
             >
               <YouTubeIcon className="w-3.5 h-3.5 fill-red-500 text-red-500" />
               <span>YouTube Video URL</span>
@@ -185,24 +185,24 @@ export function CreateRoomModal({
               value={youtubeUrl}
               onChange={(e) => setYoutubeUrl(e.target.value)}
               placeholder="https://www.youtube.com/watch?v=..."
-              className="w-full bg-zinc-50 border border-zinc-200 focus:bg-white rounded-lg px-3 py-2 text-xs text-zinc-900 focus:border-zinc-950 focus:ring-1 focus:ring-zinc-950 outline-none transition-all font-mono"
+              className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:bg-white dark:focus:bg-zinc-900 rounded-lg px-3 py-2 text-xs text-zinc-900 dark:text-white focus:border-zinc-950 dark:focus:border-zinc-600 focus:ring-1 focus:ring-zinc-950 dark:focus:ring-zinc-600 outline-none transition-all font-mono"
             />
 
             {/* Video preview strip */}
             {thumbnail && (
-              <div className="flex items-center gap-2.5 p-2 rounded-lg bg-zinc-50 border border-zinc-200 mt-2">
+              <div className="flex items-center gap-2.5 p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 mt-2">
                 <img
                   src={thumbnail}
                   alt="YouTube video thumbnail preview"
                   width={48}
                   height={32}
-                  className="w-12 h-8 rounded object-cover border border-zinc-200"
+                  className="w-12 h-8 rounded object-cover border border-zinc-200 dark:border-zinc-700"
                 />
                 <div className="flex-1 min-w-0 text-xs">
-                  <span className="font-semibold text-zinc-800 truncate block">
+                  <span className="font-semibold text-zinc-800 dark:text-zinc-200 truncate block">
                     YouTube ID: {videoId}
                   </span>
-                  <span className="text-[11px] text-emerald-600 font-medium">
+                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
                     Ready to stream in sync
                   </span>
                 </div>
@@ -212,7 +212,7 @@ export function CreateRoomModal({
 
           {/* Visibility Options */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-zinc-800">
+            <label className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
               Visibility
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -221,14 +221,14 @@ export function CreateRoomModal({
                 onClick={() => setVisibility("PUBLIC")}
                 className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer flex items-center gap-2 ${
                   visibility === "PUBLIC"
-                    ? "border-zinc-950 bg-zinc-950 text-white"
-                    : "border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100"
+                    ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-zinc-800 dark:text-white"
+                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 }`}
               >
                 <Globe className="w-4 h-4 shrink-0" />
                 <div>
                   <div className="text-xs font-bold leading-tight">Public</div>
-                  <div className={`text-[10px] ${visibility === "PUBLIC" ? "text-zinc-300" : "text-zinc-500"}`}>
+                  <div className={`text-[10px] ${visibility === "PUBLIC" ? "text-zinc-300" : "text-zinc-500 dark:text-zinc-400"}`}>
                     Discoverable
                   </div>
                 </div>
@@ -239,14 +239,14 @@ export function CreateRoomModal({
                 onClick={() => setVisibility("UNLISTED")}
                 className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer flex items-center gap-2 ${
                   visibility === "UNLISTED"
-                    ? "border-zinc-950 bg-zinc-950 text-white"
-                    : "border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100"
+                    ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-zinc-800 dark:text-white"
+                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 }`}
               >
                 <Share2 className="w-4 h-4 shrink-0" />
                 <div>
                   <div className="text-xs font-bold leading-tight">Unlisted</div>
-                  <div className={`text-[10px] ${visibility === "UNLISTED" ? "text-zinc-300" : "text-zinc-500"}`}>
+                  <div className={`text-[10px] ${visibility === "UNLISTED" ? "text-zinc-300" : "text-zinc-500 dark:text-zinc-400"}`}>
                     Link only
                   </div>
                 </div>
@@ -257,14 +257,14 @@ export function CreateRoomModal({
                 onClick={() => setVisibility("PRIVATE")}
                 className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer flex items-center gap-2 ${
                   visibility === "PRIVATE"
-                    ? "border-zinc-950 bg-zinc-950 text-white"
-                    : "border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100"
+                    ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-zinc-800 dark:text-white"
+                    : "border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 }`}
               >
                 <Lock className="w-4 h-4 shrink-0" />
                 <div>
                   <div className="text-xs font-bold leading-tight">Invite Only</div>
-                  <div className={`text-[10px] ${visibility === "PRIVATE" ? "text-zinc-300" : "text-zinc-500"}`}>
+                  <div className={`text-[10px] ${visibility === "PRIVATE" ? "text-zinc-300" : "text-zinc-500 dark:text-zinc-400"}`}>
                     Private
                   </div>
                 </div>
@@ -273,11 +273,11 @@ export function CreateRoomModal({
           </div>
 
           {/* Optional Controls Toggle */}
-          <div className="pt-2 border-t border-zinc-100">
+          <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
             <button
               type="button"
               onClick={() => setShowSettings(!showSettings)}
-              className="flex items-center justify-between w-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 py-1 cursor-pointer"
+              className="flex items-center justify-between w-full text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white py-1 cursor-pointer"
             >
               <span>Room Permissions</span>
               <ChevronDown
@@ -288,23 +288,23 @@ export function CreateRoomModal({
             </button>
 
             {showSettings && (
-              <div className="mt-2 space-y-2 p-3 bg-zinc-50 rounded-lg border border-zinc-200 text-xs">
+              <div className="mt-2 space-y-2 p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 text-xs">
                 <label className="flex items-center justify-between cursor-pointer">
-                  <span className="text-zinc-800 font-medium">Host-Only Playback Control</span>
+                  <span className="text-zinc-800 dark:text-zinc-200 font-medium">Host-Only Playback Control</span>
                   <input
                     type="checkbox"
                     checked={onlyHostControl}
                     onChange={(e) => setOnlyHostControl(e.target.checked)}
-                    className="accent-zinc-950"
+                    className="accent-zinc-950 dark:accent-white"
                   />
                 </label>
                 <label className="flex items-center justify-between cursor-pointer">
-                  <span className="text-zinc-800 font-medium">Enable Room Chat</span>
+                  <span className="text-zinc-800 dark:text-zinc-200 font-medium">Enable Room Chat</span>
                   <input
                     type="checkbox"
                     checked={allowChat}
                     onChange={(e) => setAllowChat(e.target.checked)}
-                    className="accent-zinc-950"
+                    className="accent-zinc-950 dark:accent-white"
                   />
                 </label>
               </div>
@@ -312,19 +312,19 @@ export function CreateRoomModal({
           </div>
 
           {/* Footer CTA */}
-          <div className="pt-3 flex items-center justify-end gap-2 border-t border-zinc-100">
+          <div className="pt-3 flex items-center justify-end gap-2 border-t border-zinc-100 dark:border-zinc-800">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!videoId || isSubmitting}
-              className="bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-xs transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+              className="bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 text-xs font-semibold px-4 py-2 rounded-lg shadow-xs transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
             >
               {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               <span>{isSubmitting ? "Creating..." : "Start Room"}</span>

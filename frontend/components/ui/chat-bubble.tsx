@@ -24,7 +24,7 @@ const chatBubbleVariant = cva("flex gap-2 max-w-[88%] leading-relaxed", {
 });
 
 const ChatBubble = React.forwardRef<HTMLDivElement, ChatBubbleProps>(
-  ({ className, variant, layout = "default", children, ...props }, ref): React.JSX.Element => (
+  ({ className, variant, layout: _layout = "default", children, ...props }, ref): React.JSX.Element => (
     <div
       ref={ref}
       className={cn(
@@ -55,9 +55,9 @@ function ChatBubbleAvatar({
   className,
 }: ChatBubbleAvatarProps): React.JSX.Element {
   return (
-    <Avatar size="sm" className={cn("mt-0.5 shrink-0 border border-zinc-800", className)}>
+    <Avatar size="sm" className={cn("mt-0.5 shrink-0 border border-zinc-200 dark:border-zinc-800", className)}>
       {src && <AvatarImage src={src} />}
-      <AvatarFallback className="bg-zinc-800 text-[10px] text-zinc-300 font-bold">
+      <AvatarFallback className="bg-zinc-200 dark:bg-zinc-800 text-[10px] text-zinc-700 dark:text-zinc-300 font-bold">
         {fallback.slice(0, 2).toUpperCase()}
       </AvatarFallback>
     </Avatar>
@@ -91,18 +91,18 @@ function ChatBubbleHeader({
       <span
         className={cn(
           "font-semibold truncate max-w-[140px]",
-          isSelf ? "text-zinc-400" : "text-zinc-200"
+          isSelf ? "text-zinc-500 dark:text-zinc-400" : "text-zinc-800 dark:text-zinc-200"
         )}
       >
         {isSelf ? `${senderName || "You"} (You)` : senderName || "Member"}
       </span>
       {role === "HOST" && (
-        <span className="text-[9px] font-black uppercase tracking-wider text-amber-400 bg-amber-950/70 border border-amber-800/70 px-1.5 py-0.2 rounded">
+        <span className="text-[9px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-800/70 px-1.5 py-0.2 rounded">
           Host
         </span>
       )}
       {role === "MODERATOR" && (
-        <span className="text-[9px] font-black uppercase tracking-wider text-sky-400 bg-sky-950/70 border border-sky-800/70 px-1.5 py-0.2 rounded">
+        <span className="text-[9px] font-black uppercase tracking-wider text-sky-600 dark:text-sky-400 bg-sky-100 dark:bg-sky-950/70 border border-sky-300 dark:border-sky-800/70 px-1.5 py-0.2 rounded">
           Mod
         </span>
       )}
@@ -112,13 +112,13 @@ function ChatBubbleHeader({
 }
 
 const chatBubbleMessageVariants = cva(
-  "rounded-2xl px-3.5 py-2 text-xs break-words transition-colors shadow-sm",
+  "rounded-2xl px-3.5 py-2 text-xs break-words transition-colors shadow-xs",
   {
     variants: {
       variant: {
-        sent: "bg-white text-zinc-950 font-medium rounded-tr-xs selection:bg-zinc-300",
+        sent: "bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 font-medium rounded-tr-xs selection:bg-zinc-700 dark:selection:bg-zinc-300",
         received:
-          "bg-zinc-900 text-zinc-100 border border-zinc-800 rounded-tl-xs selection:bg-zinc-700",
+          "bg-zinc-100 text-zinc-900 border border-zinc-200/80 dark:bg-zinc-900 dark:text-zinc-100 dark:border-zinc-800 rounded-tl-xs selection:bg-zinc-200 dark:selection:bg-zinc-700",
       },
     },
     defaultVariants: {

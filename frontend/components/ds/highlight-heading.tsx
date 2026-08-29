@@ -51,7 +51,7 @@ export function HighlightHeading({
     <Component
       ref={containerRef}
       className={cn(
-        "font-bold tracking-tight text-zinc-900",
+        "font-bold tracking-tight text-zinc-900 dark:text-white",
         Component === "h1" && "text-3xl sm:text-4xl md:text-5xl lg:text-[50px] leading-[1.35] sm:leading-[1.4]",
         Component === "h2" && "text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-[1.3]",
         Component === "h3" && "text-xl sm:text-2xl md:text-3xl leading-[1.3]",

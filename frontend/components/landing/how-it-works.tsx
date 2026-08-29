@@ -10,7 +10,7 @@ export function HowItWorks(): React.JSX.Element {
   return (
     <section
       id="how-it-works"
-      className="py-16 sm:py-24 bg-zinc-100/70 border-y border-zinc-200/80"
+      className="py-16 sm:py-24 bg-zinc-100/70 dark:bg-zinc-900/40 border-y border-zinc-200/80 dark:border-zinc-800"
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <ScrollReveal direction="up">
@@ -20,10 +20,10 @@ export function HowItWorks(): React.JSX.Element {
               subtext="Three simple steps"
               className="mb-3"
             />
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-zinc-900">
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-zinc-900 dark:text-white">
               How WatchParty Works
             </h2>
-            <p className="text-zinc-500 max-w-lg mx-auto mt-3 text-sm sm:text-base">
+            <p className="text-zinc-500 dark:text-zinc-400 max-w-lg mx-auto mt-3 text-sm sm:text-base">
               From a YouTube link to a full watch party in under 10 seconds.
             </p>
           </div>

@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { Play, Plus, Search } from "lucide-react";
+import { ThemeToggle } from "@/components/ds/theme-toggle";
 
 interface DashboardNavProps {
   onCreateClick: () => void;
@@ -70,20 +71,22 @@ export function DashboardNav({
 
         {/* Actions & User */}
         <div className="flex items-center gap-3">
+          <ThemeToggle />
+
           <button
             onClick={onCreateClick}
-            className="inline-flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 text-xs font-semibold px-3.5 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Room</span>
           </button>
 
-          <div className="h-4 w-px bg-zinc-200 hidden sm:block" />
+          <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block" />
 
           <UserButton
             appearance={{
               elements: {
-                avatarBox: "h-7 w-7 border border-zinc-200",
+                avatarBox: "h-7 w-7 border border-zinc-200 dark:border-zinc-800",
               },
             }}
           />

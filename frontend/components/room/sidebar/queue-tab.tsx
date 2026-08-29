@@ -61,14 +61,14 @@ export function QueueTab({
               placeholder="Paste YouTube link or Video ID..."
               value={newQueueUrl}
               onChange={(e) => setNewQueueUrl(e.target.value)}
-              className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-zinc-700 focus-visible:ring-1 focus-visible:ring-zinc-600 font-mono text-zinc-200 placeholder:text-zinc-600 disabled:opacity-60"
+              className="flex-1 bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-zinc-400 dark:focus:border-zinc-700 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-600 font-mono text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 disabled:opacity-60"
             />
             <button
               type="submit"
               aria-label="Add video to queue"
               disabled={isPending || !newQueueUrl.trim()}
               aria-disabled={isPending || !newQueueUrl.trim()}
-              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+              className="px-2.5 py-1.5 bg-zinc-950 hover:bg-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 transition-colors"
             >
               {isPending ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -86,17 +86,17 @@ export function QueueTab({
             playlist.items.map((item, idx) => (
               <div
                 key={item.id}
-                className="flex items-center gap-2 p-2 rounded-xl bg-zinc-950/60 border border-zinc-800/80 text-xs"
+                className="flex items-center gap-2 p-2 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800/80 text-xs"
               >
-                <span className="font-mono text-zinc-500 text-[10px] w-4 text-center">
+                <span className="font-mono text-zinc-400 dark:text-zinc-500 text-[10px] w-4 text-center">
                   #{idx + 1}
                 </span>
 
                 <div className="flex-1 truncate">
-                  <span className="font-medium text-zinc-200 truncate block text-xs">
+                  <span className="font-medium text-zinc-900 dark:text-zinc-200 truncate block text-xs">
                     {item.media?.title || "Video"}
                   </span>
-                  <span className="text-[10px] text-zinc-500">
+                  <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
                     By {item.addedByName || "Guest"}
                   </span>
                 </div>
@@ -107,7 +107,7 @@ export function QueueTab({
                     <button
                       type="button"
                       onClick={() => onReorderPlaylistItem(item.id, "UP")}
-                      className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white cursor-pointer"
+                      className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white cursor-pointer"
                       title="Move Up"
                       aria-label={`Move ${item.media?.title || "video"} up in queue`}
                     >
@@ -118,7 +118,7 @@ export function QueueTab({
                     <button
                       type="button"
                       onClick={() => onReorderPlaylistItem(item.id, "DOWN")}
-                      className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white cursor-pointer"
+                      className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white cursor-pointer"
                       title="Move Down"
                       aria-label={`Move ${item.media?.title || "video"} down in queue`}
                     >
@@ -131,7 +131,7 @@ export function QueueTab({
                   <button
                     type="button"
                     onClick={() => onPlayQueueItem(item.media?.id || item.mediaId)}
-                    className="p-1 rounded bg-zinc-800 hover:bg-zinc-700 text-white cursor-pointer"
+                    className="p-1 rounded bg-zinc-950 hover:bg-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-white cursor-pointer"
                     title="Play now"
                     aria-label={`Play ${item.media?.title || "video"} now`}
                   >
@@ -143,7 +143,7 @@ export function QueueTab({
                   <button
                     type="button"
                     onClick={() => onRemovePlaylistItem(item.id)}
-                    className="p-1 rounded text-zinc-500 hover:text-red-400 hover:bg-red-950/40 cursor-pointer"
+                    className="p-1 rounded text-zinc-400 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
                     title="Remove from queue"
                     aria-label={`Remove ${item.media?.title || "video"} from queue`}
                   >
@@ -153,7 +153,7 @@ export function QueueTab({
               </div>
             ))
           ) : (
-            <div className="text-center py-12 text-zinc-600 text-xs">
+            <div className="text-center py-12 text-zinc-400 dark:text-zinc-600 text-xs">
               Queue is empty. Add a video link to start building the playlist!
             </div>
           )}

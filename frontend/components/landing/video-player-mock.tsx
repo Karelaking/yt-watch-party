@@ -6,20 +6,20 @@ import { YouTubeIcon } from "@/components/ds/brand-icons";
 
 export function VideoPlayerMock(): React.JSX.Element {
   const [isPlaying, setIsPlaying] = React.useState(true);
-  const [progress, setProgress] = React.useState(68);
+  const progress = 68;
 
   return (
-    <div className="w-75 sm:w-95 md:w-110 text-zinc-900 select-none">
+    <div className="w-75 sm:w-95 md:w-110 text-zinc-900 dark:text-zinc-100 select-none">
       {/* Player header */}
-      <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-zinc-100">
+      <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-zinc-100 dark:border-zinc-800">
         <div className="flex items-center gap-2">
           <div className="h-2.5 w-2.5 rounded-full bg-red-500 animate-ping" />
-          <span className="text-xs font-bold text-zinc-900 tracking-tight flex items-center gap-1.5">
+          <span className="text-xs font-bold text-zinc-900 dark:text-white tracking-tight flex items-center gap-1.5">
             <YouTubeIcon className="w-4 h-4 text-red-600 fill-red-600" /> Synced
             Stream
           </span>
         </div>
-        <span className="text-[11px] font-semibold text-zinc-600 bg-zinc-100 px-2.5 py-0.5 rounded-full border border-zinc-200">
+        <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700">
           HD 1080p • 60fps
         </span>
       </div>
@@ -55,15 +55,15 @@ export function VideoPlayerMock(): React.JSX.Element {
 
       {/* Timeline scrub bar */}
       <div className="mt-3.5 space-y-1.5">
-        <div className="relative h-2 w-full bg-zinc-100 rounded-full overflow-hidden cursor-pointer group">
+        <div className="relative h-2 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden cursor-pointer group">
           <div
-            className="h-full bg-zinc-900 rounded-full transition-all duration-300 group-hover:bg-red-600"
+            className="h-full bg-zinc-900 dark:bg-white rounded-full transition-all duration-300 group-hover:bg-red-600 dark:group-hover:bg-red-500"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="flex items-center justify-between text-[11px] font-medium text-zinc-400">
+        <div className="flex items-center justify-between text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
           <span>14:28</span>
-          <span className="text-zinc-800 font-bold">Lofi Chill Beats ☕</span>
+          <span className="text-zinc-800 dark:text-zinc-200 font-bold">Lofi Chill Beats ☕</span>
           <span>21:10</span>
         </div>
       </div>

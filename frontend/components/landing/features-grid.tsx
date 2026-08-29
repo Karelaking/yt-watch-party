@@ -13,10 +13,10 @@ export function FeaturesGrid(): React.JSX.Element {
     >
       <ScrollReveal direction="up">
         <div className="text-center mb-14">
-          <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-zinc-900">
+          <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-zinc-900 dark:text-white">
             Everything You Need For The Perfect Party
           </h2>
-          <p className="text-zinc-500 max-w-2xl mx-auto mt-3 text-sm sm:text-base">
+          <p className="text-zinc-500 dark:text-zinc-400 max-w-2xl mx-auto mt-3 text-sm sm:text-base">
             Built from scratch with modern WebSockets, high-frequency timecode
             sync, and delightful micro-interactions.
           </p>
@@ -29,24 +29,24 @@ export function FeaturesGrid(): React.JSX.Element {
         <ScrollReveal direction="up" delay={0.05} className="md:col-span-2">
           <BentoCard
             icon={Zap}
-            iconBg="bg-amber-100 text-amber-900 border-amber-200"
+            iconBg="bg-amber-100 text-amber-900 border-amber-200 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-800"
             tag="Sub-15ms"
             title="Frame-Perfect Clock Synchronization"
             description="Our continuous drift-correction algorithm calibrates millisecond network latency across all connected peers, ensuring everyone reacts to the punchline at the exact same instant."
             preview={
-              <div className="w-full py-4 px-6 flex items-center justify-between bg-white rounded-xl border border-zinc-200 shadow-xs">
+              <div className="w-full py-4 px-6 flex items-center justify-between bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-xs">
                 <div className="flex items-center gap-3">
                   <div className="h-3 w-3 rounded-full bg-emerald-500 animate-ping" />
                   <div>
-                    <div className="text-xs font-bold text-zinc-900">
+                    <div className="text-xs font-bold text-zinc-900 dark:text-white">
                       Timecode Delta
                     </div>
-                    <div className="text-[11px] text-zinc-400">
+                    <div className="text-[11px] text-zinc-400 dark:text-zinc-500">
                       Host vs Client: 0.008s
                     </div>
                   </div>
                 </div>
-                <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/60">
                   LOCKED SYNC
                 </span>
               </div>
@@ -58,7 +58,7 @@ export function FeaturesGrid(): React.JSX.Element {
         <ScrollReveal direction="up" delay={0.1} className="md:col-span-1">
           <BentoCard
             icon={MessageSquare}
-            iconBg="bg-blue-100 text-blue-900 border-blue-200"
+            iconBg="bg-blue-100 text-blue-900 border-blue-200 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-800"
             tag="Real-Time"
             title="Animated Reactions & Chat"
             description="Drop flying popcorn, laughing emojis, and synchronized sound effects right over the video stream."
@@ -77,21 +77,21 @@ export function FeaturesGrid(): React.JSX.Element {
         <ScrollReveal direction="up" delay={0.15} className="md:col-span-1">
           <BentoCard
             icon={Lock}
-            iconBg="bg-purple-100 text-purple-900 border-purple-200"
+            iconBg="bg-purple-100 text-purple-900 border-purple-200 dark:bg-purple-950 dark:text-purple-200 dark:border-purple-800"
             tag="Role Management"
             title="Granular Host Permissions"
             description="Lock playback controls to the room host, pass the DJ crown, or vote on queue additions democratically."
             preview={
               <div className="w-full space-y-2 text-xs">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-zinc-200">
-                  <span className="font-medium text-zinc-700">DJ Pass Mode</span>
-                  <span className="font-bold text-zinc-900 text-[11px] bg-zinc-100 px-2 py-0.5 rounded-md">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">DJ Pass Mode</span>
+                  <span className="font-bold text-zinc-900 dark:text-white text-[11px] bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
                     Host Only
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-zinc-200">
-                  <span className="font-medium text-zinc-700">Queue Voting</span>
-                  <span className="font-bold text-emerald-600 text-[11px] bg-emerald-50 px-2 py-0.5 rounded-md">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">Queue Voting</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 text-[11px] bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-900">
                     Enabled
                   </span>
                 </div>
@@ -104,19 +104,19 @@ export function FeaturesGrid(): React.JSX.Element {
         <ScrollReveal direction="up" delay={0.2} className="md:col-span-2">
           <BentoCard
             icon={Globe2}
-            iconBg="bg-emerald-100 text-emerald-900 border-emerald-200"
+            iconBg="bg-emerald-100 text-emerald-900 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-800"
             tag="Cross Platform"
             title="Zero Installation Required"
             description="No buggy Chrome extensions to install or permissions to grant. Works smoothly on iPhone, Android, Mac, Windows, Linux, and even Smart TV browsers with just a shareable URL."
             preview={
               <div className="w-full grid grid-cols-3 gap-2 text-center text-xs">
-                <div className="p-3 bg-white rounded-xl border border-zinc-200 shadow-2xs font-semibold text-zinc-800">
+                <div className="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-2xs font-semibold text-zinc-800 dark:text-zinc-200">
                   📱 Mobile
                 </div>
-                <div className="p-3 bg-white rounded-xl border border-zinc-200 shadow-2xs font-semibold text-zinc-800">
+                <div className="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-2xs font-semibold text-zinc-800 dark:text-zinc-200">
                   💻 Desktop
                 </div>
-                <div className="p-3 bg-white rounded-xl border border-zinc-200 shadow-2xs font-semibold text-zinc-800">
+                <div className="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-2xs font-semibold text-zinc-800 dark:text-zinc-200">
                   📺 Smart TV
                 </div>
               </div>

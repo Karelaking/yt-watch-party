@@ -785,7 +785,7 @@ export function YouTubeSyncPlayer({
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => isPlaying && setShowControls(false)}
-      className="group relative flex flex-col bg-zinc-950 rounded-2xl border border-zinc-800 shadow-2xl overflow-hidden select-none"
+      className="group relative flex flex-col bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden select-none"
     >
       {/* Stream Header */}
       <PlayerHeaderBar
@@ -803,7 +803,7 @@ export function YouTubeSyncPlayer({
         <form
           onSubmit={handleUrlSubmit}
           aria-busy={isPending}
-          className="p-2.5 bg-zinc-900 border-b border-zinc-800 flex items-center gap-2 z-30"
+          className="p-2.5 bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-2 z-30"
         >
           <label htmlFor="switcher-video-url" className="sr-only">
             Switch video URL
@@ -817,13 +817,13 @@ export function YouTubeSyncPlayer({
             value={newVideoUrl}
             onChange={(e) => setNewVideoUrl(e.target.value)}
             placeholder="Paste YouTube, Twitch, Vimeo, or direct MP4 URL..."
-            className="flex-1 bg-zinc-950 border border-zinc-700 text-white rounded-lg px-3 py-1.5 text-xs outline-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 font-mono disabled:opacity-60"
+            className="flex-1 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white rounded-lg px-3 py-1.5 text-xs outline-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 font-mono disabled:opacity-60"
           />
           <button
             type="submit"
             disabled={isPending || !newVideoUrl.trim()}
             aria-disabled={isPending || !newVideoUrl.trim()}
-            className="bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+            className="bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
           >
             <span role="status" aria-live="polite">
               {isPending ? "Changing Video..." : "Change Video"}

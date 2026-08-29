@@ -1117,7 +1117,7 @@ export function RoomContent({ roomId }: RoomContentProps): React.JSX.Element {
     null;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col font-sans selection:bg-zinc-800 selection:text-white overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground bg-dot-pattern flex flex-col font-sans selection:bg-zinc-900 selection:text-white dark:selection:bg-zinc-100 dark:selection:text-zinc-950 overflow-x-hidden">
       {/* Top Header */}
       <RoomHeader
         room={room}

@@ -81,19 +81,19 @@ function RoomInviteForm({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs select-none">
-      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl w-full max-w-lg shadow-2xl text-white overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/70 backdrop-blur-xs select-none">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-lg shadow-2xl text-zinc-900 dark:text-white overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800 bg-zinc-900/80">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/80">
           <div className="flex items-center gap-2">
-            <Share2 className="w-4 h-4 text-zinc-400" />
-            <h2 className="text-sm font-bold tracking-tight">Invite to Watch Party</h2>
+            <Share2 className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+            <h2 className="text-sm font-bold tracking-tight text-zinc-950 dark:text-white">Invite to Watch Party</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close invite modal"
-            className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="p-1 rounded-lg text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -102,42 +102,42 @@ function RoomInviteForm({
         <div className="p-5 space-y-4 text-xs">
           {/* Quick Copy Link & Code */}
           <div className="space-y-2">
-            <label className="font-semibold text-zinc-300 block">
+            <label className="font-semibold text-zinc-700 dark:text-zinc-300 block">
               Direct Room Link & Code
             </label>
 
             <div className="flex items-center gap-2">
-              <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-zinc-300 font-mono truncate text-[11px]">
+              <div className="flex-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-zinc-800 dark:text-zinc-300 font-mono truncate text-[11px]">
                 {roomUrl}
               </div>
               <button
                 onClick={handleCopyLink}
-                className="bg-white hover:bg-zinc-200 text-zinc-950 font-semibold px-3 py-2 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                className="bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 font-semibold px-3 py-2 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
               >
                 {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedLink ? "Copied" : "Copy Link"}</span>
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-900 border border-zinc-800">
-              <span className="text-zinc-400">Room Quick Code:</span>
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+              <span className="text-zinc-600 dark:text-zinc-400">Room Quick Code:</span>
               <button
                 onClick={handleCopyCode}
-                className="font-mono font-bold text-white hover:text-emerald-400 flex items-center gap-1.5 cursor-pointer"
+                className="font-mono font-bold text-zinc-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-1.5 cursor-pointer"
               >
                 <span>{room.code}</span>
-                {copiedCode ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                {copiedCode ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-zinc-400 dark:text-zinc-500" />}
               </button>
             </div>
           </div>
 
           {/* Create Custom Token / Email Invite */}
-          <form onSubmit={handleCreateInvitation} aria-busy={isPending} className="space-y-3 pt-3 border-t border-zinc-800">
+          <form onSubmit={handleCreateInvitation} aria-busy={isPending} className="space-y-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
             <label
               htmlFor="invite-email-input"
-              className="font-semibold text-zinc-300 flex items-center gap-1.5"
+              className="font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5"
             >
-              <Mail className="w-3.5 h-3.5 text-zinc-400" />
+              <Mail className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
               <span>Generate Invitation Token / Email Invite</span>
             </label>
 
@@ -150,7 +150,7 @@ function RoomInviteForm({
                 value={email}
                 disabled={isPending}
                 onChange={(e) => setEmail(e.target.value)}
-                className="sm:col-span-8 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-white outline-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-60"
+                className="sm:col-span-8 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-zinc-400 dark:focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-500 disabled:opacity-60"
               />
 
               <select
@@ -158,7 +158,7 @@ function RoomInviteForm({
                 value={expiresHours}
                 disabled={isPending}
                 onChange={(e) => setExpiresHours(Number(e.target.value))}
-                className="sm:col-span-4 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-2 text-white outline-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-60"
+                className="sm:col-span-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-2 py-2 text-zinc-900 dark:text-white outline-none focus:border-zinc-400 dark:focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-500 disabled:opacity-60"
               >
                 <option value={1}>Expires in 1h</option>
                 <option value={24}>Expires in 24h</option>
@@ -170,7 +170,7 @@ function RoomInviteForm({
               type="submit"
               disabled={isPending}
               aria-disabled={isPending}
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+              className="w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-white font-semibold py-2 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
               {isPending ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -190,7 +190,7 @@ function RoomInviteForm({
               <p
                 role="status"
                 aria-live="polite"
-                className="text-emerald-400 text-center font-medium"
+                className="text-emerald-600 dark:text-emerald-400 text-center font-medium"
               >
                 Invitation created successfully!
               </p>
@@ -199,8 +199,8 @@ function RoomInviteForm({
 
           {/* Active Invitations List */}
           {inviteList.length > 0 && (
-            <div className="space-y-2 pt-3 border-t border-zinc-800">
-              <span className="text-zinc-400 font-semibold uppercase tracking-wider text-[10px] block">
+            <div className="space-y-2 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+              <span className="text-zinc-500 dark:text-zinc-400 font-semibold uppercase tracking-wider text-[10px] block">
                 Active Invitations ({inviteList.length})
               </span>
 
@@ -208,10 +208,10 @@ function RoomInviteForm({
                 {inviteList.map((inv) => (
                   <div
                     key={inv.id}
-                    className="flex items-center justify-between p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px]"
+                    className="flex items-center justify-between p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 text-[11px]"
                   >
                     <div className="truncate flex-1">
-                      <span className="font-semibold text-zinc-200 block truncate">
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-200 block truncate">
                         {inv.inviteeEmail || "Expiring Web Token"}
                       </span>
                       <span className="text-zinc-500 text-[10px]">
@@ -219,7 +219,7 @@ function RoomInviteForm({
                       </span>
                     </div>
 
-                    <span className="text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded text-[10px] font-semibold">
+                    <span className="text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800/40 px-2 py-0.5 rounded text-[10px] font-semibold">
                       {inv.status}
                     </span>
                   </div>

@@ -50,15 +50,15 @@ export function RoomSidebar({
   const currentPlaylist = room.playlists[0] || null;
 
   return (
-    <div className="flex flex-col h-full bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden select-none text-white">
+    <div className="flex flex-col h-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden select-none text-zinc-900 dark:text-white shadow-xs">
       {/* 4 Navigation Tabs */}
-      <div className="grid grid-cols-4 p-1 bg-zinc-950/80 border-b border-zinc-800 text-[11px] font-semibold">
+      <div className="grid grid-cols-4 p-1 bg-zinc-100/80 dark:bg-zinc-950/80 border-b border-zinc-200 dark:border-zinc-800 text-[11px] font-semibold">
         <button
           onClick={() => setActiveTab("CHAT")}
           className={`py-1.5 rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer ${
             activeTab === "CHAT"
-              ? "bg-zinc-800 text-white"
-              : "text-zinc-500 hover:text-zinc-300"
+              ? "bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-xs font-bold"
+              : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300"
           }`}
         >
           <MessageSquare className="w-3 h-3" />
@@ -69,8 +69,8 @@ export function RoomSidebar({
           onClick={() => setActiveTab("QUEUE")}
           className={`py-1.5 rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer ${
             activeTab === "QUEUE"
-              ? "bg-zinc-800 text-white"
-              : "text-zinc-500 hover:text-zinc-300"
+              ? "bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-xs font-bold"
+              : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300"
           }`}
         >
           <ListMusic className="w-3 h-3" />
@@ -81,8 +81,8 @@ export function RoomSidebar({
           onClick={() => setActiveTab("MEMBERS")}
           className={`py-1.5 rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer ${
             activeTab === "MEMBERS"
-              ? "bg-zinc-800 text-white"
-              : "text-zinc-500 hover:text-zinc-300"
+              ? "bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-xs font-bold"
+              : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300"
           }`}
         >
           <Users className="w-3 h-3" />
@@ -93,8 +93,8 @@ export function RoomSidebar({
           onClick={() => setActiveTab("ACTIVITY")}
           className={`py-1.5 rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer ${
             activeTab === "ACTIVITY"
-              ? "bg-zinc-800 text-white"
-              : "text-zinc-500 hover:text-zinc-300"
+              ? "bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-xs font-bold"
+              : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300"
           }`}
         >
           <Activity className="w-3 h-3" />

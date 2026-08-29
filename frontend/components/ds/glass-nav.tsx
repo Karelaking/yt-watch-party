@@ -4,10 +4,11 @@ import * as React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { PillButton } from "./pill-button";
-import { Play, Sparkles, ChevronDown, Menu, X, Users } from "lucide-react";
+import { Play, Menu, X } from "lucide-react";
 import { Show, UserButton } from "@clerk/nextjs";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { ThemeToggle } from "./theme-toggle";
 
 export type GlassNavProps = React.HTMLAttributes<HTMLElement>;
 
@@ -54,7 +55,8 @@ export function GlassNav({ className, ...props }: GlassNavProps): React.JSX.Elem
         className={cn(
           "flex items-center justify-between px-5 py-3 rounded-full transition-all duration-300 select-none",
           // Dark sleek capsule style matching the Brandly top bar
-          "bg-zinc-950 text-white shadow-xl shadow-zinc-950/20 border border-zinc-800/80 backdrop-blur-lg"
+          "bg-zinc-950 text-white shadow-xl shadow-zinc-950/20 border border-zinc-800/80 backdrop-blur-lg",
+          scrolled && "shadow-2xl border-zinc-700/80"
         )}
       >
         {/* Brand Logo */}
@@ -140,6 +142,7 @@ export function GlassNav({ className, ...props }: GlassNavProps): React.JSX.Elem
               }}
             />
           </Show>
+          <ThemeToggle className="h-7 w-7 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white border-zinc-700/60" />
         </div>
 
         {/* Mobile Menu Trigger */}
@@ -231,8 +234,18 @@ export function GlassNav({ className, ...props }: GlassNavProps): React.JSX.Elem
               Go to Dashboard
             </Link>
             <div className="flex items-center justify-between px-3 py-2 bg-zinc-900 rounded-lg">
+              <span className="text-sm font-medium text-zinc-300">Theme</span>
+              <ThemeToggle className="h-7 w-7 bg-zinc-800 text-zinc-300 border-zinc-700" />
+            </div>
+            <div className="flex items-center justify-between px-3 py-2 bg-zinc-900 rounded-lg">
               <span className="text-sm font-medium text-zinc-300">Account</span>
               <UserButton />
+            </div>
+          </Show>
+          <Show when="signed-out">
+            <div className="flex items-center justify-between px-3 py-2 bg-zinc-900 rounded-lg">
+              <span className="text-sm font-medium text-zinc-300">Theme</span>
+              <ThemeToggle className="h-7 w-7 bg-zinc-800 text-zinc-300 border-zinc-700" />
             </div>
           </Show>
         </div>

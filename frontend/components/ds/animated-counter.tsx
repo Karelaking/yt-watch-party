@@ -69,13 +69,13 @@ export function AnimatedCounter({
       className={cn("flex flex-col items-center text-center p-4 select-none", className)}
       {...props}
     >
-      <div className="text-4xl sm:text-5xl font-extrabold tracking-tight text-zinc-900 flex items-center justify-center">
+      <div className="text-4xl sm:text-5xl font-extrabold tracking-tight text-zinc-900 dark:text-white flex items-center justify-center">
         {prefix && <span>{prefix}</span>}
         <span ref={countRef}>0</span>
         {suffix && <span>{suffix}</span>}
       </div>
-      <div className="mt-2 text-sm font-semibold text-zinc-800">{label}</div>
-      {sublabel && <div className="text-xs text-zinc-400 mt-0.5">{sublabel}</div>}
+      <div className="mt-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">{label}</div>
+      {sublabel && <div className="text-xs text-zinc-400 dark:text-zinc-400 mt-0.5">{sublabel}</div>}
     </div>
   );
 }

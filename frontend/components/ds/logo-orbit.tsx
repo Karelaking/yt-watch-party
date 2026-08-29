@@ -33,7 +33,7 @@ export function LogoOrbit({ className, ...props }: LogoOrbitProps): React.JSX.El
       name: "YouTube 4K",
       icon: <YouTubeIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#FF0000]" />,
       tag: "4K 60fps",
-      color: "bg-red-50 text-red-600 border-red-200 hover:border-red-400 shadow-red-500/10",
+      color: "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/60 hover:border-red-400 dark:hover:border-red-700 shadow-red-500/10",
       x: 35,
       y: 120,
       path: "M 500 300 C 380 300, 180 230, 35 120",
@@ -43,7 +43,7 @@ export function LogoOrbit({ className, ...props }: LogoOrbitProps): React.JSX.El
       name: "Discord Sync",
       icon: <DiscordIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#5865F2]" />,
       tag: "Voice & Chat",
-      color: "bg-indigo-50 text-indigo-600 border-indigo-200 hover:border-indigo-400 shadow-indigo-500/10",
+      color: "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-900/60 hover:border-indigo-400 dark:hover:border-indigo-700 shadow-indigo-500/10",
       x: 125,
       y: 65,
       path: "M 500 300 C 410 270, 260 180, 125 65",
@@ -53,7 +53,7 @@ export function LogoOrbit({ className, ...props }: LogoOrbitProps): React.JSX.El
       name: "Twitch Live",
       icon: <TwitchIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#9146FF]" />,
       tag: "Live Streams",
-      color: "bg-purple-50 text-purple-600 border-purple-200 hover:border-purple-400 shadow-purple-500/10",
+      color: "bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-900/60 hover:border-purple-400 dark:hover:border-purple-700 shadow-purple-500/10",
       x: 270,
       y: 35,
       path: "M 500 300 C 440 240, 360 140, 270 35",
@@ -63,7 +63,7 @@ export function LogoOrbit({ className, ...props }: LogoOrbitProps): React.JSX.El
       name: "Spatial Audio",
       icon: <SpatialAudioIcon className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />,
       tag: "3D Sound",
-      color: "bg-emerald-50 text-emerald-600 border-emerald-200 hover:border-emerald-400 shadow-emerald-500/10",
+      color: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60 hover:border-emerald-400 dark:hover:border-emerald-700 shadow-emerald-500/10",
       x: 395,
       y: 15,
       path: "M 500 300 C 475 210, 445 110, 395 15",
@@ -73,7 +73,7 @@ export function LogoOrbit({ className, ...props }: LogoOrbitProps): React.JSX.El
       name: "Zero Lag Sync",
       icon: <ZeroLagIcon className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />,
       tag: "< 15ms Delta",
-      color: "bg-amber-50 text-amber-600 border-amber-200 hover:border-amber-400 shadow-amber-500/10",
+      color: "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/60 hover:border-amber-400 dark:hover:border-amber-700 shadow-amber-500/10",
       x: 515,
       y: 15,
       path: "M 500 300 C 525 210, 555 110, 515 15",
@@ -83,7 +83,7 @@ export function LogoOrbit({ className, ...props }: LogoOrbitProps): React.JSX.El
       name: "Role Controls",
       icon: <RoleControlsIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />,
       tag: "Host Only",
-      color: "bg-blue-50 text-blue-600 border-blue-200 hover:border-blue-400 shadow-blue-500/10",
+      color: "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/60 hover:border-blue-400 dark:hover:border-blue-700 shadow-blue-500/10",
       x: 640,
       y: 35,
       path: "M 500 300 C 560 240, 640 140, 640 35",
@@ -93,7 +93,7 @@ export function LogoOrbit({ className, ...props }: LogoOrbitProps): React.JSX.El
       name: "Chrome PWA",
       icon: <ChromeIcon className="w-5 h-5 sm:w-6 sm:h-6 text-sky-600" />,
       tag: "No Extension",
-      color: "bg-sky-50 text-sky-600 border-sky-200 hover:border-sky-400 shadow-sky-500/10",
+      color: "bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-900/60 hover:border-sky-400 dark:hover:border-sky-700 shadow-sky-500/10",
       x: 760,
       y: 75,
       path: "M 500 300 C 590 270, 740 180, 760 75",
@@ -103,7 +103,7 @@ export function LogoOrbit({ className, ...props }: LogoOrbitProps): React.JSX.El
       name: "Magic Link",
       icon: <MagicLinkIcon className="w-5 h-5 sm:w-6 sm:h-6 text-rose-500" />,
       tag: "1-Click Join",
-      color: "bg-rose-50 text-rose-600 border-rose-200 hover:border-rose-400 shadow-rose-500/10",
+      color: "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/60 hover:border-rose-400 dark:hover:border-rose-700 shadow-rose-500/10",
       x: 905,
       y: 110,
       path: "M 500 300 C 620 300, 820 230, 905 110",
@@ -246,7 +246,7 @@ export function LogoOrbit({ className, ...props }: LogoOrbitProps): React.JSX.El
           cx="500"
           cy="300"
           r="45"
-          className="hub-ripple stroke-zinc-200/80 transition-all"
+          className="hub-ripple stroke-zinc-200/80 dark:stroke-zinc-800/80 transition-all"
           strokeWidth="1.25"
           strokeDasharray="4 4"
         />
@@ -254,7 +254,7 @@ export function LogoOrbit({ className, ...props }: LogoOrbitProps): React.JSX.El
           cx="500"
           cy="300"
           r="80"
-          className="hub-ripple hub-ripple-outer stroke-zinc-200/60 transition-all"
+          className="hub-ripple hub-ripple-outer stroke-zinc-200/60 dark:stroke-zinc-800/60 transition-all"
           strokeWidth="1"
           strokeDasharray="6 6"
         />
@@ -262,7 +262,7 @@ export function LogoOrbit({ className, ...props }: LogoOrbitProps): React.JSX.El
           cx="500"
           cy="300"
           r="115"
-          className="hub-ripple hub-ripple-outer stroke-zinc-200/40 transition-all"
+          className="hub-ripple hub-ripple-outer stroke-zinc-200/40 dark:stroke-zinc-800/40 transition-all"
           strokeWidth="0.75"
           strokeDasharray="8 8"
         />
@@ -273,7 +273,7 @@ export function LogoOrbit({ className, ...props }: LogoOrbitProps): React.JSX.El
             {/* 1. Base dashed track */}
             <path
               id={`track-${i}`}
-              className="orbit-base-path stroke-zinc-200/90"
+              className="orbit-base-path stroke-zinc-200/90 dark:stroke-zinc-800/90"
               d={sat.path}
               strokeWidth="1.25"
               strokeDasharray="4 4"
@@ -316,16 +316,16 @@ export function LogoOrbit({ className, ...props }: LogoOrbitProps): React.JSX.El
         >
           <div
             className={cn(
-              "relative h-13 w-13 sm:h-15 sm:w-15 md:h-16 md:w-16 rounded-2xl border flex flex-col items-center justify-center shadow-xs bg-white text-lg sm:text-xl md:text-2xl transition-all duration-300 group-hover:scale-115 group-hover:shadow-lg group-hover:-translate-y-1.5",
+              "relative h-13 w-13 sm:h-15 sm:w-15 md:h-16 md:w-16 rounded-2xl border flex flex-col items-center justify-center shadow-xs bg-white dark:bg-zinc-900 text-lg sm:text-xl md:text-2xl transition-all duration-300 group-hover:scale-115 group-hover:shadow-lg group-hover:-translate-y-1.5",
               sat.color
             )}
           >
             <span>{sat.icon}</span>
-            <span className="text-[8px] sm:text-[9px] font-bold text-zinc-500 scale-90 group-hover:text-zinc-900 group-hover:scale-100 transition-all -mt-0.5 whitespace-nowrap">
+            <span className="text-[8px] sm:text-[9px] font-bold text-zinc-500 dark:text-zinc-400 scale-90 group-hover:text-zinc-900 dark:group-hover:text-white group-hover:scale-100 transition-all -mt-0.5 whitespace-nowrap">
               {sat.tag}
             </span>
           </div>
-          <span className="mt-1.5 text-[11px] sm:text-xs font-semibold text-zinc-700 bg-white/90 px-2 py-0.5 rounded-full border border-zinc-200/80 shadow-2xs text-center whitespace-nowrap group-hover:text-zinc-950 group-hover:bg-white transition-colors">
+          <span className="mt-1.5 text-[11px] sm:text-xs font-semibold text-zinc-700 dark:text-zinc-300 bg-white/90 dark:bg-zinc-900/90 px-2 py-0.5 rounded-full border border-zinc-200/80 dark:border-zinc-800 shadow-2xs text-center whitespace-nowrap group-hover:text-zinc-950 dark:group-hover:text-white group-hover:bg-white dark:group-hover:bg-zinc-800 transition-colors">
             {sat.name}
           </span>
         </div>
@@ -344,10 +344,10 @@ export function LogoOrbit({ className, ...props }: LogoOrbitProps): React.JSX.El
 
         <div
           ref={centerHubRef}
-          className="relative flex items-center justify-center h-20 w-20 sm:h-22 sm:w-22 rounded-3xl bg-zinc-950 text-white shadow-2xl shadow-zinc-950/40 border-2 border-zinc-800 cursor-pointer group transition-transform duration-300 hover:scale-110 active:scale-95"
+          className="relative flex items-center justify-center h-20 w-20 sm:h-22 sm:w-22 rounded-3xl bg-zinc-950 dark:bg-zinc-900 text-white shadow-2xl shadow-zinc-950/40 dark:shadow-black/60 border-2 border-zinc-800 dark:border-zinc-700 cursor-pointer group transition-transform duration-300 hover:scale-110 active:scale-95"
         >
           {/* Subtle pulse aura */}
-          <div className="absolute inset-0 rounded-3xl bg-zinc-900 animate-ping opacity-20" />
+          <div className="absolute inset-0 rounded-3xl bg-zinc-900 dark:bg-zinc-800 animate-ping opacity-20" />
           
           <div className="relative flex flex-col items-center justify-center">
             <Play className="h-8 w-8 sm:h-9 sm:w-9 fill-white text-white ml-1 transition-transform group-hover:scale-115" />

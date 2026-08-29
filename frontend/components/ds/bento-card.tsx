@@ -90,7 +90,7 @@ export function BentoCard({
     <div
       ref={cardRef}
       className={cn(
-        "group relative flex flex-col justify-between overflow-hidden rounded-3xl bg-white p-6 sm:p-8 border border-zinc-200/90 shadow-xs hover:shadow-xl hover:shadow-zinc-950/5 transition-all duration-300 hover:-translate-y-1 select-none",
+        "group relative flex flex-col justify-between overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 p-6 sm:p-8 border border-zinc-200/90 dark:border-zinc-800 shadow-xs hover:shadow-xl hover:shadow-zinc-950/5 dark:hover:shadow-black/40 transition-all duration-300 hover:-translate-y-1 select-none",
         span,
         className
       )}
@@ -99,7 +99,7 @@ export function BentoCard({
       {...props}
     >
       {/* Background soft radial glow on hover */}
-      <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-zinc-100/60 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
+      <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-zinc-100/60 dark:bg-zinc-800/40 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
 
       {/* Top Header */}
       <div className="relative z-10 flex items-start justify-between">
@@ -107,7 +107,7 @@ export function BentoCard({
           <div
             ref={iconRef}
             className={cn(
-              "flex h-12 w-12 items-center justify-center rounded-2xl border border-zinc-200/70 shadow-xs",
+              "flex h-12 w-12 items-center justify-center rounded-2xl border border-zinc-200/70 dark:border-zinc-700/60 shadow-xs",
               iconBg
             )}
           >
@@ -115,7 +115,7 @@ export function BentoCard({
           </div>
         )}
         {tag && (
-          <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700 border border-zinc-200">
+          <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-3 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
             {tag}
           </span>
         )}
@@ -123,17 +123,17 @@ export function BentoCard({
 
       {/* Preview Graphic Slot */}
       {preview && (
-        <div className="bento-preview-slot relative z-10 my-6 flex flex-1 items-center justify-center overflow-hidden rounded-2xl border border-zinc-100 bg-zinc-50/50 p-4">
+        <div className="bento-preview-slot relative z-10 my-6 flex flex-1 items-center justify-center overflow-hidden rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50 p-4">
           {preview}
         </div>
       )}
 
       {/* Content */}
       <div className="relative z-10 mt-6 space-y-2">
-        <h3 className="text-xl font-bold tracking-tight text-zinc-900 group-hover:text-black">
+        <h3 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white group-hover:text-black dark:group-hover:text-zinc-100">
           {title}
         </h3>
-        <p className="text-sm leading-relaxed text-zinc-500">{description}</p>
+        <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{description}</p>
       </div>
 
       {children}

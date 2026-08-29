@@ -62,7 +62,7 @@ export function FloatingCard({
     <div
       ref={cardRef}
       className={cn(
-        "bg-white/95 backdrop-blur-md rounded-2xl border border-zinc-200/90 p-4 shadow-xl shadow-zinc-950/5 transition-shadow select-none",
+        "bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-2xl border border-zinc-200/90 dark:border-zinc-800 p-4 shadow-xl shadow-zinc-950/5 dark:shadow-black/40 transition-shadow select-none",
         floatReverse ? "animate-float-reverse" : "animate-float",
         className
       )}

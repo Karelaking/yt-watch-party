@@ -68,22 +68,22 @@ export function SocialProof({
       {/* Avatar Stack */}
       <div className="flex -space-x-2.5 overflow-hidden p-0.5">
         <img
-          className="avatar-item inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover shadow-xs"
+          className="avatar-item inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-zinc-900 object-cover shadow-xs"
           src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
           alt="Avatar 1"
         />
         <img
-          className="avatar-item inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover shadow-xs"
+          className="avatar-item inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-zinc-900 object-cover shadow-xs"
           src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
           alt="Avatar 2"
         />
         <img
-          className="avatar-item inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover shadow-xs"
+          className="avatar-item inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-zinc-900 object-cover shadow-xs"
           src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80"
           alt="Avatar 3"
         />
         <img
-          className="avatar-item inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover shadow-xs"
+          className="avatar-item inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-zinc-900 object-cover shadow-xs"
           src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80"
           alt="Avatar 4"
         />
@@ -99,11 +99,11 @@ export function SocialProof({
             />
           ))}
         </div>
-        <span className="text-sm font-bold text-zinc-900 ml-0.5">{rating}</span>
+        <span className="text-sm font-bold text-zinc-900 dark:text-white ml-0.5">{rating}</span>
       </div>
 
       {/* Trust Text */}
-      <div className="text-xs font-medium text-zinc-500 tracking-tight sm:border-l sm:border-zinc-200 sm:pl-3">
+      <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 tracking-tight sm:border-l sm:border-zinc-200 dark:sm:border-zinc-800 sm:pl-3">
         {trustedCount}
       </div>
     </div>

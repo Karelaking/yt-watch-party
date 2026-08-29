@@ -40,10 +40,10 @@ export default async function Home(): Promise<React.JSX.Element> {
       >
         <ScrollReveal direction="up">
           <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-6xl font-extrabold tracking-tight text-zinc-900">
+            <h2 className="text-3xl sm:text-6xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
               Experience Real-Time Sync in Action
             </h2>
-            <p className="text-zinc-500 max-w-3xl mx-auto mt-2 text-sm sm:text-xl">
+            <p className="text-zinc-500 dark:text-zinc-400 max-w-3xl mx-auto mt-2 text-sm sm:text-xl">
               Test creating a real synchronized room right from the landing
               page.
             </p>

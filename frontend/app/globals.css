@@ -28,6 +28,31 @@
   --dot-size: 24px;
 }
 
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #121215;
+  --card-foreground: #fafafa;
+  --popover: #121215;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #09090b;
+  --secondary: #18181b;
+  --secondary-foreground: #fafafa;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --accent: #18181b;
+  --accent-foreground: #fafafa;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #d4d4d8;
+
+  /* Custom DS Tokens Dark */
+  --dot-color: rgba(255, 255, 255, 0.05);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -90,6 +115,7 @@ body {
   border-radius: 9999px;
   border: 1px solid #d4d4d8;
   background: #f4f4f5;
+  color: inherit;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   font-weight: 700;
   vertical-align: middle;
@@ -97,11 +123,23 @@ body {
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.dark .pill-highlight {
+  border-color: #27272a;
+  background: #18181b;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
 .pill-highlight:hover {
   border-color: #a1a1aa;
   background: #ffffff;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.dark .pill-highlight:hover {
+  border-color: #3f3f46;
+  background: #27272a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Subtle floating keyframe */
@@ -163,6 +201,11 @@ body {
   border: 1px solid rgba(228, 228, 231, 0.8);
 }
 
+.dark .glass-panel {
+  background: rgba(18, 18, 21, 0.85);
+  border-color: rgba(39, 39, 42, 0.8);
+}
+
 /* Glow on hover */
 .hover-glow {
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -171,12 +214,19 @@ body {
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.12);
   transform: translateY(-2px);
 }
+.dark .hover-glow:hover {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
 
 /* Curved path styling for integration orbit lines */
 .orbit-line {
   stroke: #e4e4e7;
   stroke-dasharray: 4 4;
   fill: none;
+}
+
+.dark .orbit-line {
+  stroke: #27272a;
 }
 
 @keyframes sound-wave {

@@ -119,18 +119,18 @@ export function ChatTab({
   };
 
   return (
-    <div className="relative flex-1 flex flex-col justify-between overflow-hidden bg-zinc-950/60">
+    <div className="relative flex-1 flex flex-col justify-between overflow-hidden bg-zinc-50/50 dark:bg-zinc-950/60">
       {/* Scrollable Message List */}
       <ChatMessageList
         ref={scrollViewportRef}
         onScroll={handleScroll}
-        className="flex-1 p-3 overflow-y-auto space-y-3 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.15)_transparent]"
+        className="flex-1 p-3 overflow-y-auto space-y-3 [scrollbar-width:thin]"
       >
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center gap-2 text-zinc-500">
-            <MessageSquareDashed className="w-8 h-8 text-zinc-600/80 stroke-[1.5]" />
-            <p className="text-xs font-medium">No messages yet</p>
-            <p className="text-[11px] text-zinc-600 max-w-[200px]">
+          <div className="flex flex-col items-center justify-center py-20 text-center gap-2 text-zinc-400 dark:text-zinc-500">
+            <MessageSquareDashed className="w-8 h-8 text-zinc-300 dark:text-zinc-600/80 stroke-[1.5]" />
+            <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">No messages yet</p>
+            <p className="text-[11px] text-zinc-400 dark:text-zinc-600 max-w-[200px]">
               Say hello or react with emojis to get the watch party started!
             </p>
           </div>
@@ -193,7 +193,7 @@ export function ChatTab({
         <form
           onSubmit={handleSend}
           aria-busy={isPending}
-          className="p-2.5 bg-zinc-950 border-t border-zinc-800/80 flex items-center gap-2"
+          className="p-2.5 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800/80 flex items-center gap-2"
         >
           <Input
             id="room-chat-message-input"
@@ -209,7 +209,7 @@ export function ChatTab({
                 : "Type a message..."
             }
             maxLength={500}
-            className="flex-1 bg-zinc-900 border-zinc-800 text-xs text-white placeholder:text-zinc-500 rounded-xl px-3 py-2 h-9 focus-visible:ring-1 focus-visible:ring-zinc-600 disabled:opacity-60"
+            className="flex-1 bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 rounded-xl px-3 py-2 h-9 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-600 disabled:opacity-60"
           />
           <Button
             type="submit"
@@ -225,7 +225,7 @@ export function ChatTab({
               !messageText.trim() ||
               (slowModeCountdown > 0 && !isHostOrMod)
             }
-            className="h-9 w-9 p-0 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 transition-transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            className="h-9 w-9 p-0 rounded-xl bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 transition-transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0 flex items-center justify-center"
           >
             {isPending ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -239,7 +239,7 @@ export function ChatTab({
         <div
           role="status"
           aria-live="polite"
-          className="p-3 bg-zinc-950 border-t border-zinc-800/80 text-center text-xs text-zinc-500 font-medium select-none"
+          className="p-3 bg-zinc-100 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800/80 text-center text-xs text-zinc-500 font-medium select-none"
         >
           Chat has been disabled by host.
         </div>

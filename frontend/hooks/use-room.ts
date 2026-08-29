@@ -56,7 +56,7 @@ export function useRoom(roomIdOrCode: string): {
             `/rooms/${cleanInput}`,
             token
           );
-        } catch (_idErr) {
+        } catch {
           // Fallback to code lookup just in case
           const code = cleanInput.toUpperCase();
           roomRes = await apiClient.get<ApiResponse<{ room: any; settings: any }>>(

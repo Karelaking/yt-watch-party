@@ -65,10 +65,10 @@ export function MembersTab({
     <div className="flex-1 flex flex-col justify-between overflow-hidden">
       <div className="flex-1 p-3 overflow-y-auto space-y-3">
         {/* Nickname Editor for Self */}
-        <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1.5">
+        <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-1.5">
           <div className="flex items-center justify-between text-[11px]">
-            <span className="text-zinc-400 font-medium">
-              Nickname: <strong className="text-zinc-200 font-semibold">{currentMembership?.nickname || currentMembership?.user.displayName || "Default"}</strong>
+            <span className="text-zinc-600 dark:text-zinc-400 font-medium">
+              Nickname: <strong className="text-zinc-900 dark:text-zinc-200 font-semibold">{currentMembership?.nickname || currentMembership?.user.displayName || "Default"}</strong>
             </span>
             {!editingNickname ? (
               <button
@@ -76,7 +76,7 @@ export function MembersTab({
                   setNicknameInput(currentMembership?.nickname || "");
                   setEditingNickname(true);
                 }}
-                className="text-zinc-300 hover:text-white flex items-center gap-1 cursor-pointer"
+                className="text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white flex items-center gap-1 cursor-pointer font-medium"
               >
                 <Edit2 className="w-3 h-3" /> Edit
               </button>
@@ -100,20 +100,20 @@ export function MembersTab({
                 onChange={(e) => setNicknameInput(e.target.value)}
                 autoFocus
                 maxLength={50}
-                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 disabled:opacity-60"
+                className="flex-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg px-2 py-1 text-xs text-zinc-900 dark:text-white outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-400 disabled:opacity-60"
               />
               <button
                 type="submit"
                 disabled={isPending || !nicknameInput.trim()}
                 aria-disabled={isPending || !nicknameInput.trim()}
-                className="px-2 py-1 bg-white text-zinc-950 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
+                className="px-2.5 py-1 bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50 transition-colors"
               >
                 <span role="status" aria-live="polite">{isPending ? "Saving..." : "Save"}</span>
               </button>
               <button
                 type="button"
                 onClick={() => setEditingNickname(false)}
-                className="px-2 py-1 text-zinc-400 hover:text-white text-xs cursor-pointer"
+                className="px-2 py-1 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white text-xs cursor-pointer"
               >
                 Cancel
               </button>
@@ -126,14 +126,14 @@ export function MembersTab({
           {memberships.map((m) => (
             <div
               key={m.id}
-              className="flex items-center justify-between p-2 rounded-xl bg-zinc-950/60 border border-zinc-800/80 text-xs"
+              className="flex items-center justify-between p-2 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800/80 text-xs"
             >
               <div className="flex items-center gap-2 truncate">
-                <div className="w-6 h-6 rounded-full bg-zinc-800 text-zinc-300 flex items-center justify-center font-bold text-[10px] shrink-0">
+                <div className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 flex items-center justify-center font-bold text-[10px] shrink-0">
                   {m.user.displayName?.[0] || "U"}
                 </div>
                 <div className="truncate">
-                  <span className="font-medium text-zinc-200 truncate block">
+                  <span className="font-medium text-zinc-900 dark:text-zinc-200 truncate block">
                     {m.nickname || m.user.displayName || "Watcher"}
                   </span>
                 </div>
@@ -141,15 +141,15 @@ export function MembersTab({
 
               <div className="flex items-center gap-1.5">
                 {m.role === "HOST" ? (
-                  <span className="text-[10px] font-bold text-amber-400 bg-amber-950/60 border border-amber-800/60 px-1.5 py-0.5 rounded flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800/60 px-1.5 py-0.5 rounded flex items-center gap-1">
                     <Crown className="w-3 h-3" /> Host
                   </span>
                 ) : m.role === "MODERATOR" ? (
-                  <span className="text-[10px] font-bold text-sky-400 bg-sky-950/60 border border-sky-800/60 px-1.5 py-0.5 rounded flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400 bg-sky-100 dark:bg-sky-950/60 border border-sky-300 dark:border-sky-800/60 px-1.5 py-0.5 rounded flex items-center gap-1">
                     <Shield className="w-3 h-3" /> Mod
                   </span>
                 ) : (
-                  <span className="text-[10px] text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] text-zinc-600 dark:text-zinc-500 bg-zinc-200/60 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
                     Viewer
                   </span>
                 )}
@@ -165,7 +165,7 @@ export function MembersTab({
                           m.role === "MODERATOR" ? "PARTICIPANT" : "MODERATOR"
                         );
                       }}
-                      className="text-[10px] text-zinc-400 hover:text-white px-1 py-0.5 rounded hover:bg-zinc-800 cursor-pointer"
+                      className="text-[10px] text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white px-1 py-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 cursor-pointer"
                       title="Toggle Moderator Role"
                     >
                       {m.role === "MODERATOR" ? "Demote" : "Mod"}
@@ -176,7 +176,7 @@ export function MembersTab({
                         const targetId = m.userId || (m.user as any)?.id || (m.user as any)?.clerkUserId;
                         onTransferHost(targetId);
                       }}
-                      className="text-[10px] text-amber-400 hover:text-amber-300 px-1 py-0.5 rounded hover:bg-zinc-800 cursor-pointer"
+                      className="text-[10px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 px-1 py-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 cursor-pointer font-medium"
                       title="Transfer Room Ownership"
                     >
                       Host
@@ -187,7 +187,7 @@ export function MembersTab({
                         const targetId = m.userId || (m.user as any)?.id || (m.user as any)?.clerkUserId;
                         onKickMember(targetId);
                       }}
-                      className="p-1 text-zinc-400 hover:text-red-400 cursor-pointer"
+                      className="p-1 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
                       title="Kick Member"
                     >
                       <UserX className="w-3 h-3" />
@@ -201,7 +201,7 @@ export function MembersTab({
                           name: m.nickname || m.user.displayName || "User",
                         });
                       }}
-                      className="p-1 text-zinc-400 hover:text-red-500 cursor-pointer"
+                      className="p-1 text-zinc-400 hover:text-red-600 dark:hover:text-red-500 cursor-pointer"
                       title="Ban Member"
                     >
                       <Ban className="w-3 h-3" />
@@ -216,8 +216,8 @@ export function MembersTab({
 
       {/* Ban Confirmation Dialog */}
       {banModalUser && (
-        <div className="p-3 bg-red-950/40 border-t border-red-900/60 space-y-2 text-xs">
-          <span className="font-bold text-red-400 block">
+        <div className="p-3 bg-red-50 dark:bg-red-950/40 border-t border-red-200 dark:border-red-900/60 space-y-2 text-xs">
+          <span className="font-bold text-red-600 dark:text-red-400 block">
             Ban {banModalUser.name}?
           </span>
           <div className="flex items-center gap-2">
@@ -231,13 +231,13 @@ export function MembersTab({
               value={banReason}
               onChange={(e) => setBanReason(e.target.value)}
               placeholder="Reason for ban..."
-              className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-xs text-white"
+              className="flex-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-2 py-1 text-xs text-zinc-900 dark:text-white"
             />
             <select
               aria-label="Ban scope type"
               value={banType}
               onChange={(e) => setBanType(e.target.value as BanType)}
-              className="bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-xs text-white"
+              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-2 py-1 text-xs text-zinc-900 dark:text-white"
             >
               <option value="USER">User Ban</option>
               <option value="IP">IP Ban</option>
@@ -248,7 +248,7 @@ export function MembersTab({
             <button
               type="button"
               onClick={() => setBanModalUser(null)}
-              className="px-2 py-1 text-zinc-400 hover:text-white cursor-pointer"
+              className="px-2 py-1 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white cursor-pointer"
             >
               Cancel
             </button>
