@@ -32,19 +32,19 @@ export function RoomHeader({
   };
 
   return (
-    <header className="w-full bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md text-zinc-900 dark:text-white border-b border-zinc-200 dark:border-zinc-800/80 px-4 sm:px-6 h-14 flex items-center justify-between gap-4 select-none z-30">
+    <header className="w-full bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md text-zinc-900 dark:text-white border-b border-zinc-200 dark:border-zinc-800/80 px-3 sm:px-6 h-14 flex items-center justify-between gap-2 sm:gap-4 select-none z-30">
       {/* Left: Back & Room Title */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <Link
           href="/dashboard"
-          className="p-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors"
+          className="p-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors shrink-0"
           title="Back to Dashboard"
         >
           <ArrowLeft className="w-4 h-4" />
         </Link>
 
-        <div className="flex items-center gap-2">
-          <h1 className="font-bold text-sm tracking-tight text-zinc-950 dark:text-white truncate max-w-xs sm:max-w-md">
+        <div className="flex items-center gap-2 min-w-0">
+          <h1 className="font-bold text-xs sm:text-sm tracking-tight text-zinc-950 dark:text-white truncate max-w-[110px] xs:max-w-[160px] sm:max-w-xs md:max-w-md">
             {room.name}
           </h1>
 
@@ -64,17 +64,17 @@ export function RoomHeader({
       </div>
 
       {/* Right: Sync Status & Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Sync Status Badge */}
-        <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-2.5 py-1 rounded-md text-xs text-zinc-700 dark:text-zinc-300">
+        <div className="flex items-center gap-1 sm:gap-1.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-2 sm:px-2.5 py-1 rounded-md text-xs text-zinc-700 dark:text-zinc-300">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">Synced</span>
+          <span className="text-[10px] sm:text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hidden xs:inline">Synced</span>
         </div>
 
         {/* Watchers Counter */}
-        <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-2.5 py-1 rounded-md text-xs text-zinc-700 dark:text-zinc-300">
+        <div className="flex items-center gap-1 sm:gap-1.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-2 sm:px-2.5 py-1 rounded-md text-xs text-zinc-700 dark:text-zinc-300">
           <Users className="w-3 h-3 text-zinc-500 dark:text-zinc-400" />
-          <span className="text-[11px]">{room.memberships.length}</span>
+          <span className="text-[10px] sm:text-[11px]">{room.memberships.length}</span>
         </div>
 
         {/* Screen Share Button */}
@@ -104,15 +104,15 @@ export function RoomHeader({
         )}
 
         {/* Theme Toggle */}
-        <ThemeToggle />
+        <ThemeToggle className="h-8 w-8" />
 
         {/* Invite Modal Trigger */}
         <button
           onClick={onOpenInvite}
-          className="bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 font-semibold text-xs px-3 py-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+          className="bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 font-semibold text-xs px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 sm:gap-1.5 shadow-2xs"
         >
           <Share2 className="w-3 h-3" />
-          <span>Invite</span>
+          <span className="hidden xs:inline">Invite</span>
         </button>
       </div>
     </header>
